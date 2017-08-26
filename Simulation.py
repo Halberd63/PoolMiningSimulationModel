@@ -9,6 +9,8 @@ class Miner(Agent):
         self.wealth = 1
         self.power = power
         self.id = unique_id
+    
+    #Each step, the miners try to solve a puzzle
     def step(self):
         print(self.id)
 
