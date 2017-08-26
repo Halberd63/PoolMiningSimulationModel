@@ -14,10 +14,11 @@ class Miner(Agent):
     def step(self):
         print(self.id)
 
-class Pool (Model):
+class TheSimulation(Model):
     """A model with some number of agents."""
-    def __init__(self, N):
+    def __init__(self, N, P, D):
         self.num_agents = N
+        self.puzzleDifficulty = D
         self.schedule = RandomActivation(self)
         # Create agents
         self.pool_power = N
@@ -30,5 +31,5 @@ class Pool (Model):
         self.schedule.step()
 
 
-model = Pool(10)
+model = TheSimulation(10,0,100)
 model.step()
