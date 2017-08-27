@@ -276,8 +276,14 @@ class TheSimulation(Model):
             minerWealths.append(miner.wealth)
         return minerWealths
 
+    def getSoloMiningPower(self):
+        soloMiningPowers = []
+        for miner in self.schedule.agents:
+            soloMiningPowers.append(miner.soloDedicatedPower)
+        return soloMiningPowers
 
-model = TheSimulation(50,3,100)
+
+model = TheSimulation(50,30,1000)
 for _ in range(1000):
     model.step()
 model.showAgentDeets()
@@ -292,4 +298,13 @@ trace = go.Scatter(
 data = [trace]
 
 # Plot and embed in ipython notebook!
-py.iplot(data, filename='basic-scatter')
+py.plot(data, filename='Pools per miner vs Wealth')
+
+trace = go.Scatter(
+    x = model.getSoloMiningPower(),
+    y = model.getMinerWealth(),
+    mode = 'markers'
+)
+
+data = [trace]
+py.plot(data, filename='Solo Power vs Wealth')
