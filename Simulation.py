@@ -1,6 +1,10 @@
 import random
 from mesa import Agent, Model
 from mesa.time import RandomActivation
+import plotly
+plotly.tools.set_credentials_file(username='karlerikoja', api_key='tJQ6g692vFMVs89glb3v')
+import plotly.graph_objs as go
+import plotly.plotly as py
 
 #an arbitrary value used to denote wealth amongst miners
 global BTCVALUE
@@ -55,7 +59,7 @@ class Miner(Agent):
     def isBlockFound(self, power):
         effectivePower = power/self.model.getPuzzleDifficulty()
         passBar = 0.9*effectivePower
-        return random.uniform(0,1) > passBar
+        return random.uniform(0,1) < passBar
 
 
 
@@ -111,10 +115,13 @@ class Pool:
             self.recruit(miner)
 
     #Adds a miner to the list of members
-    def recruit(self, miner):
-        member = PoolMembership(self,miner)
+    def recruit(self, miner, member=None):
+        if member == None:
+            member = PoolMembership(self,miner)
         self.members.append(member)
         self.poolPower += member.getCurrentContribution()
+
+
 
     #Miner (has the option to) call this after they've found a block
     def foundBlock(self):
@@ -124,7 +131,7 @@ class Pool:
     #(In future, this function will differentiate different types of pools)
     def rewardMembers(self):
         for member in self.members:
-            effort = member.getCurrentContribution / poolPowerAfterFees
+            effort = member.getCurrentContribution() / self.poolPower
             reward = BTCVALUE*effort
             reward *= 1-self.fees
             member.getMiner().giveWealth(reward)
@@ -136,7 +143,7 @@ class Pool:
         totalPower = 0
         for member in self.members:
             totalPower += member.getCurrentContribution()
-        self. totalPower
+        return totalPower
 
 
 
@@ -196,9 +203,11 @@ class TheSimulation(Model):
             powerPerPool = powerToSpend / numberOfPoolMemberships
             poolMemberships = []
             availablePools = [pool for pool in self.pools] #DeepCopy
+            usedPools = []
             for _ in range(numberOfPoolMemberships):
                 poolIndex = random.randrange(len(availablePools))
                 pool = availablePools[poolIndex]
+                usedPools.append(pool)
                 del availablePools[poolIndex]
                 poolMemberships.append(PoolMembership(pool,powerPerPool))
 
@@ -214,6 +223,12 @@ class TheSimulation(Model):
             #Link now created miner to all their memberships
             for membership in poolMemberships:
                 membership.linkToMiner(newMiner)
+                membership.getPool().recruit(newMiner,membership)
+
+
+
+
+
 
         
 
@@ -242,8 +257,39 @@ class TheSimulation(Model):
                 + "\tNumber of pool memberships: " + str(len(miner.poolMemberships))
                 + "\tWealth: " + str(miner.wealth))
 
+    def showPoolDeets(self):
+        print("\n")
+        for i in range(len(self.getPoolList())):
+            pool = self.getPoolList()[i]
+            print("Pool #" + str(i))
+            print("Number of members: " + str(len(pool.members)) + "\nTotal pool power: " + str(pool.recalcPoolPower()) + "\n")
+
+    def getNumPoolsPerMiner(self):
+        numPools = []
+        for miner in self.schedule.agents:
+            numPools.append(len(miner.poolMemberships))
+        return numPools
+
+    def getMinerWealth(self):
+        minerWealths = []
+        for miner in self.schedule.agents:
+            minerWealths.append(miner.wealth)
+        return minerWealths
+
 
 model = TheSimulation(50,3,100)
-for _ in range(100):
+for _ in range(1000):
     model.step()
 model.showAgentDeets()
+model.showPoolDeets()
+
+trace = go.Scatter(
+    x = model.getNumPoolsPerMiner(),
+    y = model.getMinerWealth(),
+    mode = 'markers'
+)
+
+data = [trace]
+
+# Plot and embed in ipython notebook!
+py.iplot(data, filename='basic-scatter')
