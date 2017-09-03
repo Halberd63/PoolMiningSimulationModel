@@ -8,11 +8,7 @@ import plotly.plotly as py
 
 #an arbitrary value used to denote wealth amongst miners
 global BTCVALUE
-#Pass value is the value of 
-global passValue, currentValue # We need a better names
 BTCVALUE = 1000
-passValue = 0
-currentValue = 0
 
 
 #An agent that represents a cryptocurrency miner
@@ -59,13 +55,11 @@ class Miner(Agent):
 
 
     #Returns true if block is found, false if not
+    #We should ask Yevhen to double check this math
     def isBlockFound(self, power):
-        global passValue, currentValue
-        currentValue += power
-        if currentValue > passValue:
-            currentValue = 0
-            return True
-        return False
+        effectivePower = power/self.model.getPuzzleDifficulty()
+        passBar = 0.9*effectivePower
+        return random.uniform(0,1) < passBar
 
 
 
@@ -171,9 +165,6 @@ class TheSimulation(Model):
         self.numberOfMiners = N
         self.numberOfPools = P
         self.puzzleDifficulty = D
-        self.totalPower = 0
-        self.simulationTime = 0
-        self.blockFindingTimes = []
 
         #Activate the schedule 
         #(Random means that agents act in a random order each turn)
@@ -191,7 +182,6 @@ class TheSimulation(Model):
             #Total miner power
             powerToSpend = 10
             initialPTS = powerToSpend
-            self.totalPower += powerToSpend
 
             #If the simulation has no pools then do the quicker miner creation
             if self.numberOfPools == 0:
@@ -245,14 +235,7 @@ class TheSimulation(Model):
 
     #Advance the model by a discrete step
     def step(self):
-        self.simulationTime += 1
-        #Run below code if somebody has found a block
-        if random.randint(0,self.puzzleDifficulty) == 1:
-            global passValue
-            passValue = random.uniform(0,1)*self.totalPower
-            self.blockFindingTimes.append(self.simulationTime)
-            self.simulationTime = 0
-            self.schedule.step()
+        self.schedule.step()
 
 
     #Standard accessor functions
@@ -274,7 +257,6 @@ class TheSimulation(Model):
                 + "\tNumber of pool memberships: " + str(len(miner.poolMemberships))
                 + "\tWealth: " + str(miner.wealth))
 
-
     def showPoolDeets(self):
         print("\n")
         for i in range(len(self.getPoolList())):
@@ -282,21 +264,18 @@ class TheSimulation(Model):
             print("Pool #" + str(i))
             print("Number of members: " + str(len(pool.members)) + "\nTotal pool power: " + str(pool.recalcPoolPower()) + "\n")
 
-    #Get number of pools each miner is a member of
     def getNumPoolsPerMiner(self):
         numPools = []
         for miner in self.schedule.agents:
             numPools.append(len(miner.poolMemberships))
         return numPools
 
-    #List of miner's end wealths
     def getMinerWealth(self):
         minerWealths = []
         for miner in self.schedule.agents:
             minerWealths.append(miner.wealth)
         return minerWealths
 
-    #List of miner's solo mining power
     def getSoloMiningPower(self):
         soloMiningPowers = []
         for miner in self.schedule.agents:
@@ -304,96 +283,28 @@ class TheSimulation(Model):
         return soloMiningPowers
 
 
-
-
-    #A list of times representing when a block was found
-    def getMiningTimes(self):
-        return self.blockFindingTimes
-
-    #Total number of blocks found during the run
-    def getNumberOfBlocksFound(self):
-        return len(self.blockFindingTimes)
-
-model = TheSimulation(1000,1,50)
-for _ in range(10000):
+model = TheSimulation(500,30,1000)
+for _ in range(1000):
     model.step()
 model.showAgentDeets()
 model.showPoolDeets()
 
-#Code for proving that the block finding is calculated correctly
-miningTimes = model.getMiningTimes()
-miningTimes.sort()
-print(miningTimes)
-numberOfBlocksOverTime = []
-for i in range(1,miningTimes[-1]+1):
-    for j in range(len(miningTimes)):
-        if i < miningTimes[j]:
-            numberOfBlocksOverTime.append(j)
-            break
-print(numberOfBlocksOverTime)
-
-
-
-
-
-
-#Graph 1
 trace = go.Scatter(
-    x = [i for i in range(miningTimes[-1]+1)],
-    y = numberOfBlocksOverTime,
+    x = model.getNumPoolsPerMiner(),
+    y = model.getMinerWealth(),
     mode = 'markers'
 )
+
 data = [trace]
-layout = go.Layout(
-    title = "Number of Blocks Mined over Time",
-    titlefont = dict(
-        size = 32
-    ),
-    xaxis = dict(
-        title = "Time",
-        titlefont = dict(
-            size = 18
-        )
-    ),
-    yaxis = dict(
-        title = "Number of Blocks Found Within Given Time",
-        titlefont = dict(
-            size = 18
-        )
-    )
-)
-py.plot(go.Figure(data = data, layout = layout)
-    , filename='Number of blocks mined vs time')
 
+# Plot and embed in ipython notebook!
+py.plot(data, filename='Pools per miner vs Wealth')
 
-
-
-
-#Graph 2
 trace = go.Scatter(
     x = model.getSoloMiningPower(),
     y = model.getMinerWealth(),
     mode = 'markers'
 )
-data = [trace]
-layout = go.Layout(
-    title = "Miner Wealth vs Miner Independance",
-    titlefont = dict(
-        size = 32
-    ),
-    xaxis = dict(
-        title = "Processing Power Dedicated to Mining Alone",
-        titlefont = dict(
-            size = 18
-        )
-    ),
-    yaxis = dict(
-        title = "Wealth of the Miner",
-        titlefont = dict(
-            size = 18
-        )
-    )
-)
-py.plot(go.Figure(data = data, layout = layout)
-    , filename='Solo Power vs Wealth')
 
+data = [trace]
+py.plot(data, filename='Solo Power vs Wealth')
