@@ -171,6 +171,7 @@ class TheSimulation(Model):
         self.puzzleDifficulty = D
         self.totalPower = 0
         self.simulationTime = 0
+        self.numberOfBlocksFound = 0
         self.blockFindingTimes = []
 
         #Activate the schedule 
@@ -245,7 +246,8 @@ class TheSimulation(Model):
     def step(self):
         self.simulationTime += 1
         #Run below code if somebody has found a block
-        if random.randint(0,self.puzzleDifficulty) == 1:
+        if random.randint(1,self.puzzleDifficulty) == 1:
+            self.numberOfBlocksFound += 1
             global passValue
             passValue = random.uniform(0,1)*self.totalPower
             self.blockFindingTimes.append(self.simulationTime)
@@ -262,6 +264,8 @@ class TheSimulation(Model):
         return self.puzzleDifficulty
     def getPoolList(self):
         return self.pools
+    def getNoOfBlocksFound(self):
+        return self.numberOfBlocksFound
 
     #Function to assist with debugging and early output
     def showAgentDeets(self):
