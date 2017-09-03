@@ -326,7 +326,7 @@ trace = go.Scatter(
 data = [trace]
 
 #Plot and embed in ipython notebook!
-py.plot(data, filename='Time taken per block')
+py.plot(data, filename='Number of blocks mined vs time')
 
 # trace = go.Scatter(
 #     x = model.getSoloMiningPower(),
