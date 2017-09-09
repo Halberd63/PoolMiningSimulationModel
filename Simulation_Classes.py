@@ -45,6 +45,25 @@ class Miner(Agent):
             if self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
 
+    #Each action, the miner makes shares and potentially misbehaves
+    def act(self):
+        #print(self.id)
+        for membership in self.poolMemberships:
+            membership.pool.recieveShares(self)
+
+    def sharesFound(self, power):
+        sharesFound = 0
+        p = power/self.model.totalPower
+        d = self.model.puzzleDifficulty
+        #Chance of finding a share should be 2,000,000x easier
+        #Than chance of finding block
+
+        #TODO
+        #Calculate how many shares this miner finds in each step
+
+        return sharesFound
+
+
     #Called when miner finds a block while mining alone
     def foundBlockSolo(self):
         self.wealth += BTCVALUE
@@ -118,6 +137,19 @@ class Pool:
         for miner in startingMembers:
             self.recruit(miner)
 
+        self.sharesSubmitted = []
+        self.sharesSinceLastRound = 0
+        self.rewardScheme = None
+
+    #Set the reward scheme of the pool. Scheme options:
+    #PPLNS = Pay per last N Shares
+    #PROP = Proportional
+    #PPS = Pay per share
+    def setRewardScheme(self, scheme, N = 0):
+        self.rewardScheme = scheme
+        if scheme == "PPLNS":
+            self.lastN = N
+
     #Adds a miner to the list of members
     def recruit(self, miner, member=None):
         if member == None:
@@ -129,17 +161,38 @@ class Pool:
 
     #Miner (has the option to) call this after they've found a block
     def foundBlock(self):
-        self.rewardMembers()
+        if self.rewardScheme == "PPLNS":
+            self.pplnsRewardMembers()
+        else: 
+            self.genericRewardMembers()
 
-    #Function to give wealth to all members 
-    #(In future, this function will differentiate different types of pools)
-    def rewardMembers(self):
+    #Function to give wealth to all members base on current input
+    #Processing power (This is not accurate to real world as it
+    #Does not consider shares, as such, only use it for testing)
+    def genericRewardMembers(self):
         for member in self.members:
             effort = member.getCurrentContribution() / self.poolPower
             reward = BTCVALUE*effort
             reward *= 1-self.fees
             member.getMiner().giveWealth(reward)
-        
+
+    #Reward scheme for pay per last N shares
+    def pplnsRewardMembers(self):
+        n = min(len(self.sharesSubmitted), self.lastN)
+        worthOfEachShare = BTCVALUE/n
+        worthOfEachShare *= 1-self.fees
+        for i in range(-1,-n - 1,-1):
+            self.sharesSubmitted[i].giveWealth(worthOfEachShare)
+
+
+    #This function is called by miners who wish to submit shares to the pool
+    def recieveShares(self, minerWhoSubmitted):
+        self.sharesSubmitted += [minerWhoSubmitted]
+        self.sharesSinceLastRound += 1
+
+    #called by the model whenever a block is found
+    def roundEnd(self):
+        self.sharesSinceLastRound = 0
 
     #O(n) function that updates the total power of the group
     #(Try not to call this often)
@@ -245,6 +298,9 @@ class TheSimulation(Model):
     #Advance the model by a discrete step
     def step(self):
         self.simulationTime += 1
+        #Miners search for shares and/or misbehave
+        for miner in self.schedule.agents:
+            miner.act()
         #Run below code if somebody has found a block
         if random.randint(1,self.puzzleDifficulty) == 1:
             self.numberOfBlocksFound += 1
@@ -253,6 +309,8 @@ class TheSimulation(Model):
             self.blockFindingTimes.append(self.simulationTime)
             self.simulationTime = 0
             self.schedule.step()
+            for pool in self.pools:
+                pool.roundEnd()
 
 
     #Standard accessor functions
