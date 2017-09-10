@@ -7,9 +7,10 @@ global BTCVALUE
 BTCVALUE = 1000
 
 #Variables that decide who actually found a block when one is found to be found
-global passValue, currentValue # We need a better names
+global passValue, currentValue, blockFound # We need a better names
 passValue = 0
 currentValue = 0
+blockFound = False
 
 
 
@@ -37,20 +38,24 @@ class Miner(Agent):
 
     #Each step, the miners try to solve puzzles
     def step(self):
-        #print(self.id)
+        global blockFound
         if (self.soloDedicatedPower > 0):
-            if self.isBlockFound(self.soloDedicatedPower):
+            if not blockFound and self.isBlockFound(self.soloDedicatedPower):
                 self.foundBlockSolo()
         for membership in self.poolMemberships:
-            if self.isBlockFound(membership.getCurrentContribution()):
+            if not blockFound and self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
 
     #Each action, the miner makes shares and potentially misbehaves
     def act(self):
-        #print(self.id)
+        if self.id == 0:
+            for membership in self.poolMemberships:
+                if membership.getCurrentContribution() > 0:
+                    membership.setCurrentContribution(0)
+            self.poolMemberships[random.randint(0, len(self.poolMemberships)-1)].setCurrentContribution(self.power)
         for membership in self.poolMemberships:
-            membership.pool.recieveShares(self)
-
+            membership.pool.recieveShares(membership)
+            membership.makePowerContribution()
     def sharesFound(self, power):
         sharesFound = 0
         p = power/self.model.totalPower
@@ -77,10 +82,11 @@ class Miner(Agent):
 
     #Returns true if block is found, false if not
     def isBlockFound(self, power):
-        global passValue, currentValue
+        global passValue, currentValue, blockFound
         currentValue += power
         if currentValue > passValue:
             currentValue = 0
+            blockFound = True
             return True
         return False
 
@@ -116,6 +122,8 @@ class PoolMembership:
         return self.totalPowerContributed
     def getTimeSinceJoining(self):
         return self.totalPowerContributed
+    def setCurrentContribution(self,power):
+        self.currentContribution = power
     def getCurrentContribution(self):
         return self.currentContribution
 
@@ -123,7 +131,9 @@ class PoolMembership:
     def makePowerContribution(self):
         self.timeSinceJoining += 1
         self.totalPowerContributed += self.currentContribution
-
+    def resetPowerContribution(self):
+        self.timeSinceJoining = 0
+        self.totalPowerContributed = 0
 
 
 
@@ -138,8 +148,9 @@ class Pool:
             self.recruit(miner)
 
         self.sharesSubmitted = []
-        self.sharesSinceLastRound = 0
+        self.sharesSinceLastRound = 0 # Shares are equivalent to the average power contributed * number of ticks
         self.rewardScheme = None
+
 
     #Set the reward scheme of the pool. Scheme options:
     #PPLNS = Pay per last N Shares
@@ -154,10 +165,12 @@ class Pool:
     def recruit(self, miner, member=None):
         if member == None:
             member = PoolMembership(self,miner)
-        self.members.append(member)
+        if member not in self.members:
+            self.members.append(member)
         self.poolPower += member.getCurrentContribution()
 
-
+    def minerLeaves(self,miner,member):
+        self.poolPower -= member.getCurrentContribution()
 
     #Miner (has the option to) call this after they've found a block
     def foundBlock(self):
@@ -170,8 +183,10 @@ class Pool:
     #Processing power (This is not accurate to real world as it
     #Does not consider shares, as such, only use it for testing)
     def genericRewardMembers(self):
+        sum = 0
         for member in self.members:
-            effort = member.getCurrentContribution() / self.poolPower
+            sum += member.getTotalPowerContribution()
+            effort = member.getTotalPowerContribution() / self.sharesSinceLastRound
             reward = BTCVALUE*effort
             reward *= 1-self.fees
             member.getMiner().giveWealth(reward)
@@ -186,9 +201,9 @@ class Pool:
 
 
     #This function is called by miners who wish to submit shares to the pool
-    def recieveShares(self, minerWhoSubmitted):
-        self.sharesSubmitted += [minerWhoSubmitted]
-        self.sharesSinceLastRound += 1
+    def recieveShares(self, minersMembershipWhoSubmitted):
+        #self.sharesSubmitted += [minersMembershipWhoSubmitted]
+        self.sharesSinceLastRound += minersMembershipWhoSubmitted.getCurrentContribution()
 
     #called by the model whenever a block is found
     def roundEnd(self):
@@ -232,7 +247,7 @@ class TheSimulation(Model):
         self.schedule = RandomActivation(self)
         
         #Create pools
-        self.pools = [Pool(0.01) for _ in range(self.numberOfPools)]
+        self.pools = [Pool(0.00) for _ in range(self.numberOfPools)]
 
         #Create agents
         for index in range(self.numberOfMiners):
@@ -255,13 +270,13 @@ class TheSimulation(Model):
 
             #Determine how independant the miner is
             percMineAlone = random.uniform(0,1)
-            aloneMiningPower = 10*percMineAlone
+            aloneMiningPower = 0 #initialPTS*percMineAlone
             powerToSpend -= aloneMiningPower
 
             #Sign the miner up to pools with the remaining power
             numberOfPoolMemberships = 1
             if self.numberOfPools > 1:
-                numberOfPoolMemberships = 1+random.randrange(self.numberOfPools)
+                numberOfPoolMemberships = self.numberOfPools #1+random.randrange(self.numberOfPools)
             powerPerPool = powerToSpend / numberOfPoolMemberships
             poolMemberships = []
             availablePools = [pool for pool in self.pools] #DeepCopy
@@ -273,10 +288,10 @@ class TheSimulation(Model):
                 del availablePools[poolIndex]
                 poolMemberships.append(PoolMembership(pool,powerPerPool))
 
-            #Debugging help
-            #print("ID: " + str(index) + "\t\tPower: " + str(initialPTS) 
-            #    + "\tSoloMining Power: " + str(round(aloneMiningPower)) 
-            #    + "\tNumber of pool memberships: " + str(len(poolMemberships)))
+            if index == 0:
+                aloneMiningPower = 0
+                poolMemberships = [PoolMembership(pool,0) for pool in self.pools]
+                poolMemberships[0].setCurrentContribution(powerToSpend)
 
             #Actually create the miner
             newMiner = Miner(index, self, initialPTS, aloneMiningPower, poolMemberships)
@@ -304,13 +319,17 @@ class TheSimulation(Model):
         #Run below code if somebody has found a block
         if random.randint(1,self.puzzleDifficulty) == 1:
             self.numberOfBlocksFound += 1
-            global passValue
+            global passValue, blockFound
             passValue = random.uniform(0,1)*self.totalPower
             self.blockFindingTimes.append(self.simulationTime)
             self.simulationTime = 0
             self.schedule.step()
+            blockFound = False
             for pool in self.pools:
                 pool.roundEnd()
+            for member in self.schedule.agents:
+                for membership in member.poolMemberships:
+                    membership.resetPowerContribution()
 
 
     #Standard accessor functions
@@ -363,7 +382,11 @@ class TheSimulation(Model):
             soloMiningPowers.append(miner.soloDedicatedPower)
         return soloMiningPowers
 
-
+    def getMinerID(self):
+        minersID = []
+        for miner in self.schedule.agents:
+            minersID.append(miner.id)
+        return minersID
 
 
     #A list of times representing when a block was found

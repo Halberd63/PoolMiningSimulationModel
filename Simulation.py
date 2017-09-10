@@ -17,9 +17,10 @@ def runSimulation(noOfMiners,noOfPools,puzzleDifficulty,noOfCycles):
         model.step()
     model.showAgentDeets()
     model.showPoolDeets()
+    minersVsWealth(model)
     return model
 
-
+runSimulation(20,50,100,10000)
 
 if __name__ == "__main__":
     if (len(argv) < 2):

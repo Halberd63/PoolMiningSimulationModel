@@ -78,3 +78,31 @@ def graphWealthoverIndependance(model):
     )
     py.plot(go.Figure(data = data, layout = layout)
         , filename='Solo Power vs Wealth')
+
+def minersVsWealth(model):
+    trace = go.Scatter(
+        x=model.getMinerID(),
+        y=model.getMinerWealth(),
+        mode='markers'
+    )
+    data = [trace]
+    layout = go.Layout(
+        title="Miner Wealth vs ID",
+        titlefont=dict(
+            size=32
+        ),
+        xaxis=dict(
+            title="Miners",
+            titlefont=dict(
+                size=18
+            )
+        ),
+        yaxis=dict(
+            title="Wealth of the Miner",
+            titlefont=dict(
+                size=18
+            )
+        )
+    )
+    py.plot(go.Figure(data=data, layout=layout)
+            , filename='MinerID vs Wealth')
