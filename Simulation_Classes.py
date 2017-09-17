@@ -1,4 +1,5 @@
 import random
+import queue
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 
@@ -135,28 +136,19 @@ class PoolMembership:
 
 
 class Pool:
-    def __init__(self, uniqueID, scheme):
+    def __init__(self, uniqueID, scheme, N = 0):
         self.poolPower = 0
         #% of a block that the pool admin takes for themself
         self.fees = 0.02
         #list of members in the pool (poolmembership instances)
         self.members = []
 
-        self.sharesSubmitted = []
+        self.sharesSubmitted = queue.Queue()
         # Shares are equivalent to the average power contributed * number of ticks
         self.sharesSinceLastRound = 0 
         self.rewardScheme = scheme
-        self.lastN = 0
+        self.lastN = N
 
-
-    #Set the reward scheme of the pool. Scheme options:
-    #PPLNS = Pay per last N Shares
-    #PROP = Proportional
-    #PPS = Pay per share
-    def setRewardScheme(self, scheme, N = 0):
-        self.rewardScheme = scheme
-        if scheme == "PPLNS":
-            self.lastN = N
 
     #Adds a miner to the list of members
     def recruit(self, miner, member=None):
@@ -236,62 +228,6 @@ class TheSimulation(Model):
         #Activate the schedule 
         #(Random means that agents act in a random order each turn)
         self.schedule = RandomActivation(self)
-        
-        #Create pools
-        self.pools = [Pool(0.00) for _ in range(self.numberOfPools)]
-
-        #Create agents
-        for index in range(self.numberOfMiners):
-            #Here, we make a bunch of random miners with different strategies
-            #Many changes will need to be made in order to change agent behaviours
-            #For now, this is the placeholder agent setup
-
-            #Total miner power
-            powerToSpend = 10
-            initialPTS = powerToSpend
-            self.totalPower += powerToSpend
-
-            #If the simulation has no pools then do the quicker miner creation
-            if self.numberOfPools == 0:
-                newMiner = Miner(index, self, powerToSpend, powerToSpend)
-                self.schedule.add(newMiner)
-                continue
-
-            #Otherwise, if there are >0 pools then do the below code
-
-            #Determine how independant the miner is
-            percMineAlone = random.uniform(0,1)
-            aloneMiningPower = 0 #initialPTS*percMineAlone
-            powerToSpend -= aloneMiningPower
-
-            #Sign the miner up to pools with the remaining power
-            numberOfPoolMemberships = 1
-            if self.numberOfPools > 1:
-                numberOfPoolMemberships = self.numberOfPools #1+random.randrange(self.numberOfPools)
-            powerPerPool = powerToSpend / numberOfPoolMemberships
-            poolMemberships = []
-            availablePools = [pool for pool in self.pools] #DeepCopy
-            usedPools = []
-            for _ in range(numberOfPoolMemberships):
-                poolIndex = random.randrange(len(availablePools))
-                pool = availablePools[poolIndex]
-                usedPools.append(pool)
-                del availablePools[poolIndex]
-                poolMemberships.append(PoolMembership(pool,powerPerPool))
-
-            if index == 0:
-                aloneMiningPower = 0
-                poolMemberships = [PoolMembership(pool,0) for pool in self.pools]
-                poolMemberships[0].setCurrentContribution(powerToSpend)
-
-            #Actually create the miner
-            newMiner = Miner(index, self, initialPTS, aloneMiningPower, poolMemberships)
-            self.schedule.add(newMiner)
-
-            #Link now created miner to all their memberships
-            for membership in poolMemberships:
-                membership.linkToMiner(newMiner)
-                membership.getPool().recruit(newMiner,membership)
 
 
 
@@ -351,32 +287,35 @@ class TheSimulation(Model):
                             poolCount += 1
                             pPools.append(Pool(poolCount,"PROPORTIONAL"))
 
-                        if pType == "PPLNS":
+                        if pType[:5] == "PPLNS":
+                            theN = int(pType[11:])
                             #Make pplns pools
                             poolCount += 1
-                            nPools.append(Pool(poolCount,"PPLNS"))
+                            nPools.append(Pool(poolCount,"PPLNS", theN))
                 if section == 3:
                     if pType == "Difficulty":
                         self.puzzleDifficulty = number
                         
         miners = phMiners + hMiners + lwMiners
-        pools = nPools + pPools
+        self.pools = nPools + pPools
         self.numberOfMiners = minerCount
         self.numberOfPools = poolCount
         self.totalPower = 0
         for miner in miners:
             self.totalPower += miner.getPower()
             if miner.getBehaviour() == "HONEST":
-                miner.setPoolMemberships([pools[
+                miner.setPoolMemberships([self.pools[
                     random.randint(0, len(self.pools)-1)]])
             if miner.getBehaviour() == "2POOLHOPPER":
-                assert len(pools) >= 2, "Too few pools for pool hoppers"
-                p1 = pools[random.randint(0, len(self.pools)-1)]
+                assert len(self.pools) >= 2, "Too few pools for pool hoppers"
+                p1 = self.pools[random.randint(0, len(self.pools)-1)]
                 p2 = p1
                 while p1 == p2:
-                    p2 = pools[random.randint(0, len(self.pools)-1)]
-                p1 = pools[random.randint(0, len(self.pools)-1)]
+                    p2 = self.pools[random.randint(0, len(self.pools)-1)]
+                p1 = self.pools[random.randint(0, len(self.pools)-1)]
                 miner.setPoolMemberships([p1,p2])
+            self.schedule.add(miner)
+
 
 
 

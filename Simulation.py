@@ -11,8 +11,8 @@ from Simulation_Graphing import *
 #Params are pretty self explanitory 
 #(Although it is worth noting that PuzzleDifficulty will be the... 
 #...average number of cycles it will take to find each block)
-def runSimulation(noOfMiners,noOfPools,puzzleDifficulty,noOfCycles):
-    model = TheSimulation()
+def runSimulation():
+    model = TheSimulation(open("Simulation_Specs.txt"))
     for _ in range(noOfCycles):
         model.step()
     model.showAgentDeets()
