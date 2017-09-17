@@ -36,6 +36,9 @@ class Miner(Agent):
         #decides how the miner will act
         self.behaviour = behaviour
 
+        #percentage of time the miner will stay with pool 1 if they are a hopper
+        self.hopPercentage = 0.5
+
     #Give the miner wealth
     def giveWealth(self, wealth):
         self.wealth += wealth
@@ -66,6 +69,8 @@ class Miner(Agent):
         for membership in self.poolMemberships:
             if self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
+            membership.pool.recieveShares(membership)
+            membership.makePowerContribution()
 
 
 
@@ -143,7 +148,10 @@ class Pool:
         #list of members in the pool (poolmembership instances)
         self.members = []
 
+        #These variables are use to keep track of who submitted 
+        #...what shares in order for PPLNS
         self.sharesSubmitted = queue.Queue()
+        self.sharesSubmittedAmount = 0
         # Shares are equivalent to the average power contributed * number of ticks
         self.sharesSinceLastRound = 0 
         self.rewardScheme = scheme
@@ -166,12 +174,12 @@ class Pool:
         if self.rewardScheme == "PPLNS":
             self.pplnsRewardMembers()
         else: 
-            self.genericRewardMembers()
+            self.propRewardMembers()
 
     #Function to give wealth to all members base on current input
     #Processing power (This is not accurate to real world as it
     #Does not consider shares, as such, only use it for testing)
-    def genericRewardMembers(self):
+    def propRewardMembers(self):
         sum = 0
         for member in self.members:
             sum += member.getTotalPowerContribution()
@@ -192,7 +200,12 @@ class Pool:
     #This function is called by miners who wish to submit shares to the pool
     def recieveShares(self, minersMembershipWhoSubmitted):
         #self.sharesSubmitted += [minersMembershipWhoSubmitted]
-        self.sharesSinceLastRound += minersMembershipWhoSubmitted.getCurrentContribution()
+        shareValue = minersMembershipWhoSubmitted.getCurrentContribution()
+        if self.rewardScheme == "PPLNS":
+            self.sharesSubmittedAmount += shareValue
+            
+            self.sharesSubmitted.put([minersMembershipWhoSubmitted,shareValue])
+        self.sharesSinceLastRound += shareValue
 
     #called by the model whenever a block is found
     def roundEnd(self):
