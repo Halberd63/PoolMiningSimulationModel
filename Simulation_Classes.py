@@ -28,6 +28,9 @@ class Miner(Agent):
         #the power dedicated to solo mining (if any)
         self.soloDedicatedPower = soloPower
 
+        #threshold for pool hopping
+        self.hoppingThreshhold = uniqueID * 5
+
     #Give the miner wealth
     def giveWealth(self, wealth):
         self.wealth += wealth
@@ -56,6 +59,8 @@ class Miner(Agent):
         for membership in self.poolMemberships:
             membership.pool.recieveShares(membership)
             membership.makePowerContribution()
+
+
     def sharesFound(self, power):
         sharesFound = 0
         p = power/self.model.totalPower
