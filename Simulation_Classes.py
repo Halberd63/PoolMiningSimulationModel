@@ -27,14 +27,13 @@ class Miner(Agent):
         self.power = 1
         #list of pools this miner needs to sign up for
         self.poolMemberships = []
-        #the power dedicated to solo mining (if any)
-        self.soloDedicatedPower = 0
-
-        #threshold for pool hopping
-        self.hoppingThreshhold = uniqueID * 5
 
         #decides how the miner will act
         self.behaviour = behaviour
+
+        #the power dedicated to solo mining (if any)
+        self.soloDedicatedPower = 0
+        if behaviour == "LONEWOLF": self.soloDedicatedPower = self.power
 
         #percentage of time the miner will stay with pool 1 if they are a hopper
         self.hopPercentage = 0.5
@@ -54,6 +53,7 @@ class Miner(Agent):
     #Standard mutator functions
     def setPower(self, p):
         self.power = p
+        if behaviour == "LONEWOLF": self.soloDedicatedPower = self.power
 
     #Given a list of pools, this miner will create memberships to each pool to link up
     def setPoolMemberships(self, pList):
@@ -67,10 +67,12 @@ class Miner(Agent):
             if self.isBlockFound(self.soloDedicatedPower):
                 self.foundBlockSolo()
         for membership in self.poolMemberships:
+            if self.behaviour == "HONEST": membership.currentContribution = self.power
+            membership.pool.recieveShares(membership)
+            membership.makeShareContribution()
             if self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
-            membership.pool.recieveShares(membership)
-            membership.makePowerContribution()
+            
 
 
 
@@ -180,9 +182,8 @@ class Pool:
     #Processing power (This is not accurate to real world as it
     #Does not consider shares, as such, only use it for testing)
     def propRewardMembers(self):
-        sum = 0
+        print("Block was found!")
         for member in self.members:
-            sum += member.getTotalPowerContribution()
             effort = member.getTotalPowerContribution() / self.sharesSinceLastRound
             reward = BTCVALUE*effort
             reward *= 1-self.fees
@@ -203,7 +204,7 @@ class Pool:
         shareValue = minersMembershipWhoSubmitted.getCurrentContribution()
         if self.rewardScheme == "PPLNS":
             self.sharesSubmittedAmount += shareValue
-            
+
             self.sharesSubmitted.put([minersMembershipWhoSubmitted,shareValue])
         self.sharesSinceLastRound += shareValue
 
@@ -230,6 +231,10 @@ class Pool:
 #Takes in number of agents, number of pools and puzzle difficulty
 class TheSimulation(Model):
     def __init__(self, inFile):
+        #Activate the schedule 
+        #(Random means that agents act in a random order each turn)
+        self.schedule = RandomActivation(self)
+
         self.interpretInput(inFile)
 
 
@@ -237,10 +242,6 @@ class TheSimulation(Model):
         self.simulationTime = 0
         self.numberOfBlocksFound = 0
         self.blockFindingTimes = []
-
-        #Activate the schedule 
-        #(Random means that agents act in a random order each turn)
-        self.schedule = RandomActivation(self)
 
 
 
@@ -257,6 +258,8 @@ class TheSimulation(Model):
         pPools = []
         nPools = []
         for line in inFile:
+            print(line)
+            print(section)
             if line[0] == "#":
                 section += 1
                 if section == 5:
@@ -271,13 +274,12 @@ class TheSimulation(Model):
                     poolID = line[1:ci-1]
                     poolType = line[ci-1]
                 else:
-                    number = int(line[1:ci])
+                    number = float(line[1:ci])
 
 
 
                 if section == 1:
-                    minerCount += 1
-                    for _ in range(number):
+                    for _ in range(int(number)):
                         if pType == "2-Pool-Hoppers":
                             #Make number default poolhoppers
                             minerCount += 1
@@ -294,7 +296,7 @@ class TheSimulation(Model):
                             lwMiners.append(Miner(minerCount,self,"LONEWOLF"))
 
                 if section == 2:
-                    for _ in range(number):
+                    for _ in range(int(number)):
                         if pType == "Proportional":
                             #Make proportianal pools
                             poolCount += 1
@@ -305,7 +307,8 @@ class TheSimulation(Model):
                             #Make pplns pools
                             poolCount += 1
                             nPools.append(Pool(poolCount,"PPLNS", theN))
-                if section == 3:
+                if section == 4:
+                    print(pType)
                     if pType == "Difficulty":
                         self.puzzleDifficulty = number
                         
@@ -357,7 +360,7 @@ class TheSimulation(Model):
                 pool.roundEnd()
             for member in self.schedule.agents:
                 for membership in member.poolMemberships:
-                    membership.resetPowerContribution()
+                    membership.resetShareContribution()
 
 
 

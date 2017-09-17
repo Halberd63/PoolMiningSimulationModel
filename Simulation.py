@@ -12,11 +12,13 @@ from Simulation_Graphing import *
 #(Although it is worth noting that PuzzleDifficulty will be the... 
 #...average number of cycles it will take to find each block)
 def runSimulation():
-    model = TheSimulation(open("Simulation_Specs.txt"))
-    for _ in range(noOfCycles):
+    inFile = open("Simulation_Specs.txt", 'r')
+    model = TheSimulation(inFile)
+    
+    for _ in range(1000):
         model.step()
-    model.showAgentDeets()
-    model.showPoolDeets()
+    #model.showAgentDeets()
+    #model.showPoolDeets()
     return model
 
 if __name__ == "__main__":

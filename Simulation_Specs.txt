@@ -1,4 +1,4 @@
-1000, Cycles
+1000, Cycles #todo make this attribute work
 #
 No. of Miners:
 >0, 2-Pool-Hoppers
@@ -12,18 +12,9 @@ No. of Pools:
 #
 
 Special Rules #Todo- make these inputs actually do something:
->1, Honest:
->0.8, Power
->1p, Pool
--
->2, Honest:
->1.8, Power
->1p, Pool
--
->3, Honest:
->1n, Pool
+
 #
-100, Difficulty
+>100, Difficulty
 
 #
 
