@@ -1,24 +1,24 @@
 No. of Miners:
-10, Pool-Hoppers
-10, Honest
-3, Lone-Wolf
---
+>10, Pool-Hoppers
+>10, Honest
+>3, Lone-Wolf
+#
 
 No. of Pools:
-10, Proportional (p)
-10, Pay per last N shares (n)
---
+>10, Proportional
+>10, PPLNS
+#
 
 Special Rules:
-1 Honest:
-Power = 0.8
-Pool = 1p
-
-2 Honest:
-Power = 1.8
-Pool = 1p
-
-3 Honest:
-Pool = 1n
-
+>1, Honest:
+>0.8, Power
+>1p, Pool
+-
+>2, Honest:
+>1.8, Power
+>1p, Pool
+-
+>3, Honest:
+>1n, Pool
+#
 
