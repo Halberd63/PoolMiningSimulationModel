@@ -11,7 +11,7 @@ global passValue, currentValue, blockFound, blockAvailable # We need a better na
 passValue = 0
 currentValue = 0
 blockFound = False
-blockAvailable = False
+blockAvailable = 0
 
 
 
@@ -50,17 +50,20 @@ class Miner(Agent):
     #Standard mutator functions
     def setPower(self, p):
         self.power = p
-    def setPoolMemberships(self, pmList):
-        self.poolMemberships = pmList
+
+    #Given a list of pools, this miner will create memberships to each pool to link up
+    def setPoolMemberships(self, pList):
+        for pool in pList:
+            self.poolMemberships.append(PoolMembership(pool, self))
 
     #Each step, the miners try to solve puzzles
     def step(self):
         global blockFound
         if (self.soloDedicatedPower > 0):
-            if not blockFound and self.isBlockFound(self.soloDedicatedPower):
+            if self.isBlockFound(self.soloDedicatedPower):
                 self.foundBlockSolo()
         for membership in self.poolMemberships:
-            if not blockFound and self.isBlockFound(membership.getCurrentContribution()):
+            if self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
 
 
@@ -79,7 +82,7 @@ class Miner(Agent):
     #Returns true if block is found, false if not
     def isBlockFound(self, power):
         global passValue, currentValue, blockFound, blockAvailable
-        if blockAvailable:
+        if blockAvailable and not blockFound:
             currentValue += power
             if currentValue > passValue:
                 currentValue = 0
@@ -96,19 +99,16 @@ class Miner(Agent):
 #Current power contributed
 #Length of time being a member
 class PoolMembership:
-    def __init__(self, pool, powerContribution, miner = None):
+    def __init__(self, pool, miner):
         #Handle input arguments
         self.pool = pool
+        pool.members.append(self)
         self.miner = miner
-        self.currentContribution = powerContribution
+        self.currentContribution = 0
 
         #Initialise history recording variables
         self.timeSinceJoining = 0
         self.totalPowerContributed = 0
-        
-    #This is called to set a miner to the membership after construction
-    def linkToMiner(self, miner):
-        self.miner = miner
 
     #Standard accessor functions
     def getMiner(self):

@@ -1,15 +1,17 @@
+1000, Cycles
+#
 No. of Miners:
->10, Pool-Hoppers
+>0, 2-Pool-Hoppers
 >10, Honest
 >3, Lone-Wolf
 #
 
 No. of Pools:
 >10, Proportional
->10, PPLNS
+>0, PPLNS N = 1000
 #
 
-Special Rules:
+Special Rules #Todo- make these inputs actually do something:
 >1, Honest:
 >0.8, Power
 >1p, Pool
@@ -20,5 +22,8 @@ Special Rules:
 -
 >3, Honest:
 >1n, Pool
+#
+100, Difficulty
+
 #
 
