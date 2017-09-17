@@ -7,29 +7,33 @@ global BTCVALUE
 BTCVALUE = 1000
 
 #Variables that decide who actually found a block when one is found to be found
-global passValue, currentValue, blockFound # We need a better names
+global passValue, currentValue, blockFound, blockAvailable # We need a better names
 passValue = 0
 currentValue = 0
 blockFound = False
+blockAvailable = False
 
 
 
 #An agent that represents a cryptocurrency miner
 class Miner(Agent):
-    def __init__(self, uniqueID, model, power, soloPower = 0, poolMemberships = []):
+    def __init__(self, uniqueID, model, behaviour):
         super().__init__(uniqueID, model)
         #Handle input arguments
         self.wealth = 0
         self.id = uniqueID
         #Computational power (This gets split between items in powerSplit)
-        self.power = power
+        self.power = 1
         #list of pools this miner needs to sign up for
-        self.poolMemberships = poolMemberships
+        self.poolMemberships = []
         #the power dedicated to solo mining (if any)
-        self.soloDedicatedPower = soloPower
+        self.soloDedicatedPower = 0
 
         #threshold for pool hopping
         self.hoppingThreshhold = uniqueID * 5
+
+        #decides how the miner will act
+        self.behaviour = behaviour
 
     #Give the miner wealth
     def giveWealth(self, wealth):
@@ -38,6 +42,14 @@ class Miner(Agent):
     #Standard accessor functions
     def getPower(self):
         return self.power
+    def getID(self):
+        return self.id
+
+    #Standard mutator functions
+    def setPower(self, p):
+        self.power = p
+    def setPoolMemberships(self, pmList):
+        self.poolMemberships = pmList
 
     #Each step, the miners try to solve puzzles
     def step(self):
@@ -49,16 +61,6 @@ class Miner(Agent):
             if not blockFound and self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
 
-    #Each action, the miner makes shares and potentially misbehaves
-    def act(self):
-        if self.id == 0:
-            for membership in self.poolMemberships:
-                if membership.getCurrentContribution() > 0:
-                    membership.setCurrentContribution(0)
-            self.poolMemberships[random.randint(0, len(self.poolMemberships)-1)].setCurrentContribution(self.power)
-        for membership in self.poolMemberships:
-            membership.pool.recieveShares(membership)
-            membership.makePowerContribution()
 
 
     #Called when miner finds a block while mining alone
@@ -74,12 +76,13 @@ class Miner(Agent):
 
     #Returns true if block is found, false if not
     def isBlockFound(self, power):
-        global passValue, currentValue, blockFound
-        currentValue += power
-        if currentValue > passValue:
-            currentValue = 0
-            blockFound = True
-            return True
+        global passValue, currentValue, blockFound, blockAvailable
+        if blockAvailable:
+            currentValue += power
+            if currentValue > passValue:
+                currentValue = 0
+                blockFound = True
+                return True
         return False
 
 
@@ -120,28 +123,28 @@ class PoolMembership:
         return self.currentContribution
 
     #Miner calls this function each step
-    def makePowerContribution(self):
+    def makeShareContribution(self):
         self.timeSinceJoining += 1
         self.totalPowerContributed += self.currentContribution
-    def resetPowerContribution(self):
+    def resetShareContribution(self):
         self.timeSinceJoining = 0
         self.totalPowerContributed = 0
 
 
 
 class Pool:
-    def __init__(self, fees, startingMembers = []):
+    def __init__(self, uniqueID, scheme):
         self.poolPower = 0
         #% of a block that the pool admin takes for themself
-        self.fees = fees
+        self.fees = 0.02
         #list of members in the pool (poolmembership instances)
         self.members = []
-        for miner in startingMembers:
-            self.recruit(miner)
 
         self.sharesSubmitted = []
-        self.sharesSinceLastRound = 0 # Shares are equivalent to the average power contributed * number of ticks
-        self.rewardScheme = None
+        # Shares are equivalent to the average power contributed * number of ticks
+        self.sharesSinceLastRound = 0 
+        self.rewardScheme = scheme
+        self.lastN = 0
 
 
     #Set the reward scheme of the pool. Scheme options:
@@ -227,9 +230,6 @@ class TheSimulation(Model):
 
 
         #Handle the input arguments
-        self.numberOfMiners = N
-        self.numberOfPools = P
-        self.puzzleDifficulty = D
         self.totalPower = 0
         self.simulationTime = 0
         self.numberOfBlocksFound = 0
@@ -302,12 +302,17 @@ class TheSimulation(Model):
     #This interprets the file input into attribute for the simulation
     def interpretInput(self, inFile):
         section = 0
-        miners = []
-        pools = []
+        minerCount = 0
+        poolCount = 0
+        phMiners = []
+        hMiners = []
+        lwMiners = []
+        pPools = []
+        nPools = []
         for line in inFile:
             if line[0] == "#":
                 section += 1
-                if section == 3:
+                if section == 5:
                     break
                 continue
 
@@ -323,24 +328,45 @@ class TheSimulation(Model):
 
 
 
-                if section == 0:
-                    if pType == "Pool-Hoppers":
-                        pass
-                        #Make number default poolhoppers
-                    if pType == "Honest":
-                        pass
-                        #Make number default honest miners
-                    if pType == "Lone-Wolf":
-                        pass
-                        #Make number default loneWolf miners
-
                 if section == 1:
-                    if pType == "Proportional":
-                        pass
-                        #Make proportianal pools
-                    if pType == "PPLNS":
-                        pass
-                        #Make pplns pools
+                    minerCount += 1
+                    for _ in range(number):
+                        if pType == "Pool-Hoppers":
+                            #Make number default poolhoppers
+                            minerCount += 1
+                            phMiners.append(Miner(minerCount,self,"POOLHOPPER"))
+
+                        if pType == "Honest":
+                            #Make number default honest miners
+                            minerCount += 1
+                            hMiners.append(Miner(minerCount,self,"HONEST"))
+
+                        if pType == "Lone-Wolf":
+                            #Make number default loneWolf miners
+                            minerCount += 1
+                            lwMiners.append(Miner(minerCount,self,"LONEWOLF"))
+
+                if section == 2:
+                    for _ in range(number):
+                        if pType == "Proportional":
+                            #Make proportianal pools
+                            poolCount += 1
+                            pPools.append(Pool(poolCount,"PROPORTIONAL"))
+
+                        if pType == "PPLNS":
+                            #Make pplns pools
+                            poolCount += 1
+                            nPools.append(Pool(poolCount,"PPLNS"))
+                if section == 3:
+                    if pType == "Difficulty":
+                        self.puzzleDifficulty = number
+                        
+        miners = phMiners + hMiners + lwMiners
+        pools = nPools + pPools
+        self.numberOfMiners = minerCount
+        self.numberOfPools = poolCount
+        for miner in miners:
+
 
 
 
@@ -352,22 +378,24 @@ class TheSimulation(Model):
     def step(self):
         self.simulationTime += 1
         #Miners search for shares and/or misbehave
-        for miner in self.schedule.agents:
-            miner.act()
+        self.schedule.step()
         #Run below code if somebody has found a block
+        global blockAvailable
+        blockAvailable = False
         if random.randint(1,self.puzzleDifficulty) == 1:
             self.numberOfBlocksFound += 1
-            global passValue, blockFound
+            global passValue, blockFound, blockAvailable
+            blockAvailable = True
             passValue = random.uniform(0,1)*self.totalPower
             self.blockFindingTimes.append(self.simulationTime)
             self.simulationTime = 0
-            self.schedule.step()
             blockFound = False
             for pool in self.pools:
                 pool.roundEnd()
             for member in self.schedule.agents:
                 for membership in member.poolMemberships:
                     membership.resetPowerContribution()
+
 
 
     #Standard accessor functions
