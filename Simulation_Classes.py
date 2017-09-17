@@ -42,6 +42,8 @@ class Miner(Agent):
     #Standard accessor functions
     def getPower(self):
         return self.power
+    def getBehaviour(self):
+        return self.behaviour
     def getID(self):
         return self.id
 
@@ -222,15 +224,11 @@ class Pool:
 #The overarching simulation class.
 #Takes in number of agents, number of pools and puzzle difficulty
 class TheSimulation(Model):
-    def __init__(self, N, P, D):
-        #Input Validation
-        assert N > 0, "INVALID SIMULATION: Need at least one miner"
-        assert P >= 0, "INVALID SIMULATION: Can't have negative number of pools"
-        assert D > 0, "INVALID SIMULATION: Difficulty must be a non-zero positive"
+    def __init__(self, inFile):
+        self.interpretInput(inFile)
 
 
         #Handle the input arguments
-        self.totalPower = 0
         self.simulationTime = 0
         self.numberOfBlocksFound = 0
         self.blockFindingTimes = []
@@ -331,10 +329,10 @@ class TheSimulation(Model):
                 if section == 1:
                     minerCount += 1
                     for _ in range(number):
-                        if pType == "Pool-Hoppers":
+                        if pType == "2-Pool-Hoppers":
                             #Make number default poolhoppers
                             minerCount += 1
-                            phMiners.append(Miner(minerCount,self,"POOLHOPPER"))
+                            phMiners.append(Miner(minerCount,self,"2POOLHOPPER"))
 
                         if pType == "Honest":
                             #Make number default honest miners
@@ -365,7 +363,20 @@ class TheSimulation(Model):
         pools = nPools + pPools
         self.numberOfMiners = minerCount
         self.numberOfPools = poolCount
+        self.totalPower = 0
         for miner in miners:
+            self.totalPower += miner.getPower()
+            if miner.getBehaviour() == "HONEST":
+                miner.setPoolMemberships([pools[
+                    random.randint(0, len(self.pools)-1)]])
+            if miner.getBehaviour() == "2POOLHOPPER":
+                assert len(pools) >= 2, "Too few pools for pool hoppers"
+                p1 = pools[random.randint(0, len(self.pools)-1)]
+                p2 = p1
+                while p1 == p2:
+                    p2 = pools[random.randint(0, len(self.pools)-1)]
+                p1 = pools[random.randint(0, len(self.pools)-1)]
+                miner.setPoolMemberships([p1,p2])
 
 
 
