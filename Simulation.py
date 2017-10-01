@@ -14,8 +14,16 @@ from Simulation_Graphing import *
 def runSimulation():
     inFile = open("Simulation_Specs.txt", 'r')
     model = TheSimulation(inFile)
+    inFile.close()
     
-    for _ in range(1000):
+    #Get number of cycles
+    inFile = open("Simulation_Specs.txt", 'r')
+    for line in inFile:
+        cycles = int(line[1:line.index(',')])
+        break
+    inFile.close()
+
+    for _ in range(cycles):
         model.step()
     #model.showAgentDeets()
     #model.showPoolDeets()
@@ -25,3 +33,4 @@ if __name__ == "__main__":
     theModel = runSimulation()
     graphBlocksFoundOverTime(theModel)
     graphWealthoverID(theModel)
+    graphPoweroverID(theModel)

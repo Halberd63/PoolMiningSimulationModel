@@ -106,3 +106,32 @@ def graphWealthoverID(model):
     )
     py.plot(go.Figure(data=data, layout=layout)
             , filename='MinerID vs Wealth')
+
+
+def graphPoweroverID(model):
+    trace = go.Scatter(
+        x=model.getMinerID(),
+        y=model.getMinerPower(),
+        mode='markers'
+    )
+    data = [trace]
+    layout = go.Layout(
+        title="Miner Power vs ID",
+        titlefont=dict(
+            size=32
+        ),
+        xaxis=dict(
+            title="Miners",
+            titlefont=dict(
+                size=18
+            )
+        ),
+        yaxis=dict(
+            title="Power of the Miner",
+            titlefont=dict(
+                size=18
+            )
+        )
+    )
+    py.plot(go.Figure(data=data, layout=layout)
+            , filename='MinerPower vs Wealth')

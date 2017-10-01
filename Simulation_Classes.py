@@ -320,6 +320,7 @@ class TheSimulation(Model):
         for miner in miners:
             self.totalPower += miner.getPower()
             if miner.getBehaviour() == "HONEST":
+                assert len(self.pools) >= 1, "Too few pools for non-lonewolves"
                 miner.setPoolMemberships([self.pools[
                     random.randint(0, len(self.pools)-1)]])
             if miner.getBehaviour() == "2POOLHOPPER":
@@ -406,6 +407,13 @@ class TheSimulation(Model):
         for miner in self.schedule.agents:
             minerWealths.append(miner.wealth)
         return minerWealths
+
+    #List of miner's end powers
+    def getMinerPower(self):
+        minerPowers = []
+        for miner in self.schedule.agents:
+            minerPowers.append(miner.power)
+        return minerPowers
 
     #List of miner's solo mining power
     def getSoloMiningPower(self):
