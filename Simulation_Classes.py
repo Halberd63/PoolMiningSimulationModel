@@ -34,6 +34,7 @@ class Miner(Agent):
         #the power dedicated to solo mining (if any)
         self.soloDedicatedPower = 0
         if behaviour == "LONEWOLF": self.soloDedicatedPower = self.power
+        if behaviour == "2POOLHOPPER": self.currentPool = 0
 
         #percentage of time the miner will stay with pool 1 if they are a hopper
         self.hopPercentage = 0.5
@@ -66,6 +67,11 @@ class Miner(Agent):
         if (self.soloDedicatedPower > 0):
             if self.isBlockFound(self.soloDedicatedPower):
                 self.foundBlockSolo()
+        if self.behaviour == "2POOLHOPPER":
+            if random.random() < self.hopPercentage:
+                self.poolMemberships[self.currentPool].currentContribution = 0
+                self.currentPool = (self.currentPool+1)%len(self.poolMemberships)
+            self.poolMemberships[self.currentPool].currentContribution = self.power
         for membership in self.poolMemberships:
             if self.behaviour == "HONEST": membership.currentContribution = self.power
             membership.pool.recieveShares(membership)
@@ -262,8 +268,6 @@ class TheSimulation(Model):
         pPools = []
         nPools = []
         for line in inFile:
-            print(line)
-            print(section)
             if line[0] == "#":
                 section += 1
                 if section == 5:
@@ -312,7 +316,6 @@ class TheSimulation(Model):
                             poolCount += 1
                             nPools.append(Pool(poolCount,"PPLNS", theN))
                 if section == 4:
-                    print(pType)
                     if pType == "Difficulty":
                         self.puzzleDifficulty = number
                         
@@ -323,17 +326,16 @@ class TheSimulation(Model):
         self.totalPower = 0
         for miner in miners:
             self.totalPower += miner.getPower()
-            if miner.getBehaviour() == "HONEST":
+            if miner.getBehaviour() == "HONEST" or len(self.pools) == 1:
                 assert len(self.pools) >= 1, "Too few pools for non-lonewolves"
                 miner.setPoolMemberships([self.pools[
                     random.randint(0, len(self.pools)-1)]])
-            if miner.getBehaviour() == "2POOLHOPPER":
+            elif miner.getBehaviour() == "2POOLHOPPER":
                 assert len(self.pools) >= 2, "Too few pools for pool hoppers"
                 p1 = self.pools[random.randint(0, len(self.pools)-1)]
-                p2 = p1
+                p2 = self.pools[random.randint(0, len(self.pools)-1)]
                 while p1 == p2:
                     p2 = self.pools[random.randint(0, len(self.pools)-1)]
-                p1 = self.pools[random.randint(0, len(self.pools)-1)]
                 miner.setPoolMemberships([p1,p2])
             self.schedule.add(miner)
 
@@ -355,7 +357,7 @@ class TheSimulation(Model):
         blockAvailable = False
         if random.randint(1,self.puzzleDifficulty) == 1:
             self.numberOfBlocksFound += 1
-            global passValue, blockFound, blockAvailable
+            global passValue, blockFound
             blockAvailable = True
             passValue = random.uniform(0,1)*self.totalPower
             self.blockFindingTimes.append(self.simulationTime)

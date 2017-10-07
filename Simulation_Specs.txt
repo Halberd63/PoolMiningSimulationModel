@@ -1,13 +1,13 @@
 >10000, Cycles #todo make this attribute work
 #
 No. of Miners:
->0, 2-Pool-Hoppers
+>1, 2-Pool-Hoppers
 >10, Honest
 >3, Lone-Wolf
 #
 
 No. of Pools:
->1, Proportional
+>10, Proportional
 >0, PPLNS N = 1000
 #
 
