@@ -72,6 +72,8 @@ class Miner(Agent):
             membership.makeShareContribution()
             if self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
+            else:
+                print(membership.totalPowerContributed)
             
 
 
@@ -173,10 +175,10 @@ class Pool:
 
     #Miner (has the option to) call this after they've found a block
     def foundBlock(self):
-        if self.rewardScheme == "PPLNS":
-            self.pplnsRewardMembers()
-        else: 
-            self.propRewardMembers()
+        #if self.rewardScheme == "PPLNS":
+        #    self.pplnsRewardMembers()
+        #else: 
+        self.propRewardMembers()
 
     #Function to give wealth to all members base on current input
     #Processing power (This is not accurate to real world as it
@@ -185,17 +187,19 @@ class Pool:
         print("Block was found!")
         for member in self.members:
             effort = member.getTotalPowerContribution() / self.sharesSinceLastRound
+            print(str(member.getTotalPowerContribution()) + " = " + str(effort))
             reward = BTCVALUE*effort
             reward *= 1-self.fees
             member.getMiner().giveWealth(reward)
 
     #Reward scheme for pay per last N shares
-    def pplnsRewardMembers(self):
-        n = min(len(self.sharesSubmitted), self.lastN)
-        worthOfEachShare = BTCVALUE/n
-        worthOfEachShare *= 1-self.fees
-        for i in range(-1,-n - 1,-1):
-            self.sharesSubmitted[i].giveWealth(worthOfEachShare)
+    #UNUSED AND BROKEN
+    #def pplnsRewardMembers(self):
+    #    n = min(len(self.sharesSubmitted), self.lastN)
+    #    worthOfEachShare = BTCVALUE/n
+    #    worthOfEachShare *= 1-self.fees
+    #    for i in range(-1,-n - 1,-1):
+    #        self.sharesSubmitted[i].giveWealth(worthOfEachShare)
 
 
     #This function is called by miners who wish to submit shares to the pool
@@ -345,7 +349,7 @@ class TheSimulation(Model):
     def step(self):
         self.simulationTime += 1
         #Miners search for shares and/or misbehave
-        self.schedule.step()
+        
         #Run below code if somebody has found a block
         global blockAvailable
         blockAvailable = False
@@ -357,11 +361,14 @@ class TheSimulation(Model):
             self.blockFindingTimes.append(self.simulationTime)
             self.simulationTime = 0
             blockFound = False
+            self.schedule.step()
             for pool in self.pools:
                 pool.roundEnd()
             for member in self.schedule.agents:
                 for membership in member.poolMemberships:
                     membership.resetShareContribution()
+        else:
+            self.schedule.step()
 
 
 
