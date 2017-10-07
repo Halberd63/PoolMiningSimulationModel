@@ -93,7 +93,7 @@ class Miner(Agent):
         if blockAvailable and not blockFound:
             currentValue += power
             if currentValue > passValue:
-                currentValue = 0
+                #currentValue = 0
                 blockFound = True
                 return True
         return False

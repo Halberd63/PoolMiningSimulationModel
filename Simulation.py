@@ -26,7 +26,7 @@ def runSimulation():
     for _ in range(cycles):
         model.step()
     #model.showAgentDeets()
-    #model.showPoolDeets()
+    model.showPoolDeets()
     return model
 
 if __name__ == "__main__":
