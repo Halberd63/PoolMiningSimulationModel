@@ -1,4 +1,5 @@
->10000, Cycles #todo make this attribute work
+>100000, Cycles #todo make this attribute work
+>3, Coins
 #
 No. of Miners:
 >1, 2-Pool-Hoppers

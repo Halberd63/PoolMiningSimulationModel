@@ -78,8 +78,6 @@ class Miner(Agent):
             membership.makeShareContribution()
             if self.isBlockFound(membership.getCurrentContribution()):
                 self.foundPoolBlock(membership.getPool())
-            else:
-                print(membership.totalPowerContributed)
             
 
 
@@ -101,6 +99,8 @@ class Miner(Agent):
         if blockAvailable and not blockFound:
             currentValue += power
             if currentValue > passValue:
+                if power == 0:
+                    print("here")
                 #currentValue = 0
                 blockFound = True
                 return True
@@ -151,12 +151,13 @@ class PoolMembership:
 
 
 class Pool:
-    def __init__(self, uniqueID, scheme, N = 0):
+    def __init__(self, uniqueID, scheme, coin,N = 0):
         self.poolPower = 0
         #% of a block that the pool admin takes for themself
         self.fees = 0.02
         #list of members in the pool (poolmembership instances)
         self.members = []
+        self.coin = coin
 
         #These variables are use to keep track of who submitted 
         #...what shares in order for PPLNS
@@ -193,7 +194,6 @@ class Pool:
         print("Block was found!")
         for member in self.members:
             effort = member.getTotalPowerContribution() / self.sharesSinceLastRound
-            print(str(member.getTotalPowerContribution()) + " = " + str(effort))
             reward = BTCVALUE*effort
             reward *= 1-self.fees
             member.getMiner().giveWealth(reward)
@@ -260,6 +260,7 @@ class TheSimulation(Model):
     #This interprets the file input into attribute for the simulation
     def interpretInput(self, inFile):
         section = 0
+        numberOfCoins = 0
         minerCount = 0
         poolCount = 0
         phMiners = []
@@ -281,9 +282,11 @@ class TheSimulation(Model):
                 if pType == "Pool":
                     poolID = line[1:ci-1]
                     poolType = line[ci-1]
+                elif pType == "Coins":
+                    numberOfCoins = int(line[1:ci])
+                    print("number of coins: " + str(numberOfCoins) + "\n")
                 else:
                     number = float(line[1:ci])
-
 
 
                 if section == 1:
@@ -308,13 +311,13 @@ class TheSimulation(Model):
                         if pType == "Proportional":
                             #Make proportianal pools
                             poolCount += 1
-                            pPools.append(Pool(poolCount,"PROPORTIONAL"))
+                            pPools.append(Pool(poolCount,"PROPORTIONAL",random.randint(1,numberOfCoins)))
 
                         if pType[:5] == "PPLNS":
                             theN = int(pType[11:])
                             #Make pplns pools
                             poolCount += 1
-                            nPools.append(Pool(poolCount,"PPLNS", theN))
+                            nPools.append(Pool(poolCount,"PPLNS", theN,random.randint(1,numberOfCoins)))
                 if section == 4:
                     if pType == "Difficulty":
                         self.puzzleDifficulty = number
@@ -336,7 +339,7 @@ class TheSimulation(Model):
                 p2 = self.pools[random.randint(0, len(self.pools)-1)]
                 while p1 == p2:
                     p2 = self.pools[random.randint(0, len(self.pools)-1)]
-                miner.setPoolMemberships([p1,p2])
+                miner.setPoolMemberships(self.pools)
             self.schedule.add(miner)
 
 
@@ -357,13 +360,14 @@ class TheSimulation(Model):
         blockAvailable = False
         if random.randint(1,self.puzzleDifficulty) == 1:
             self.numberOfBlocksFound += 1
-            global passValue, blockFound
+            global passValue, blockFound, currentValue
             blockAvailable = True
             passValue = random.uniform(0,1)*self.totalPower
             self.blockFindingTimes.append(self.simulationTime)
             self.simulationTime = 0
             blockFound = False
             self.schedule.step()
+            currentValue = 0
             for pool in self.pools:
                 pool.roundEnd()
             for member in self.schedule.agents:
