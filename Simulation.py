@@ -31,6 +31,6 @@ def runSimulation():
 
 if __name__ == "__main__":
     theModel = runSimulation()
-    graphBlocksFoundOverTime(theModel)
+    #graphBlocksFoundOverTime(theModel)
     graphWealthoverID(theModel)
-    graphPoweroverID(theModel)
+    #graphPoweroverID(theModel)
