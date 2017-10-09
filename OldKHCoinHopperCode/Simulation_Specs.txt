@@ -1,0 +1,22 @@
+>10000, Cycles #todo make this attribute work
+>3, Coins
+#
+No. of Miners:
+>1, 2-Pool-Hoppers
+>50, Honest
+>0, Lone-Wolf
+>1, Coin-Hoppers
+#
+
+No. of Pools:
+>10, Proportional
+>0, PPLNS N = 1000
+#
+
+Special Rules #Todo- make these inputs actually do something:
+
+#
+>100, Difficulty
+
+#
+
