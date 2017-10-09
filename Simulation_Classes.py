@@ -210,7 +210,7 @@ class Pool:
     #Processing power (This is not accurate to real world as it
     #Does not consider shares, as such, only use it for testing)
     def propRewardMembers(self):
-        print("Block was found!")
+        #print("Block was found!")
         for member in self.members:
             effort = member.getCurrentContribution() / (self.recalcPoolPower())
             reward = BTCVALUE*effort
@@ -263,6 +263,7 @@ class TheSimulation(Model):
         #Activate the schedule 
         #(Random means that agents act in a random order each turn)
         self.schedule = RandomActivation(self)
+        self.tickNumber = 0
 
         self.interpretInput(inFile)
 
@@ -374,6 +375,8 @@ class TheSimulation(Model):
 
     #Advance the model by a discrete step
     def step(self):
+        print(self.tickNumber)
+        self.tickNumber += 1
         global blockAvailable, coins, currentCoin, blockFound
         for coin in range(coins):
             self.simulationTime[coin] += 1

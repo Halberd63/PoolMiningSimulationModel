@@ -1,10 +1,10 @@
->10000, Cycles #todo make this attribute work
->3, Coins
+>100000000, Cycles
+>2, Coins
 #
 No. of Miners:
->1, 2-Pool-Hoppers
->50, Honest
->0, Lone-Wolf
+>0, 2-Pool-Hoppers
+>0, Honest
+>50, Lone-Wolf
 >1, Coin-Hoppers
 #
 

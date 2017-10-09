@@ -2,6 +2,7 @@ import plotly
 plotly.tools.set_credentials_file(username='karlerikoja', api_key='tJQ6g692vFMVs89glb3v')
 import plotly.graph_objs as go
 import plotly.plotly as py
+import matplotlib.pyplot as plt
 
 
 #This graph is mostly used to prove our algorithm works correctly
@@ -79,7 +80,7 @@ def graphWealthoverIndependance(model):
     py.plot(go.Figure(data = data, layout = layout)
         , filename='Solo Power vs Wealth')
 
-def graphWealthoverID(model):
+def graphWealthoverID_Legacy(model):
     trace = go.Scatter(
         x=model.getMinerID(),
         y=model.getMinerWealth(),
@@ -108,7 +109,7 @@ def graphWealthoverID(model):
             , filename='MinerID vs Wealth')
 
 
-def graphPoweroverID(model):
+def graphPoweroverID_Legacy(model):
     trace = go.Scatter(
         x=model.getMinerID(),
         y=model.getMinerPower(),
@@ -135,3 +136,26 @@ def graphPoweroverID(model):
     )
     py.plot(go.Figure(data=data, layout=layout)
             , filename='MinerPower vs Wealth')
+
+
+
+
+
+def graphPoweroverID(model):
+    x=model.getMinerID()
+    y=model.getMinerPower()
+    plt.plot(x,y)
+    plt.xlabel('Miner ID')
+    plt.ylabel('Miner Power')
+    plt.title('Miner Power vs ID')
+    plt.show()
+
+def graphWealthoverID(model):
+    x=model.getMinerID()
+    y=model.getMinerWealth()
+    plt.plot(x,y, 'ro')
+    plt.xlabel('Miner ID')
+    plt.ylabel('Miner Wealth')
+    plt.title('Miner Wealth vs ID')
+    plt.show()
+        
