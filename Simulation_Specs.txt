@@ -3,14 +3,14 @@
 #
 No. of Miners:
 >0, 2-Pool-Hoppers
->10, Honest
->10, Lone-Wolf
->1, Coin-Hoppers
+>50, Honest
+>0, Lone-Wolf
+>0, Coin-Hoppers
 >1, Yev-Coin-Hoppers params = 0.5 200 1
 #
 
 No. of Pools:
->20, Proportional
+>5, Proportional
 >1, Proportional-With-Set-Coin 0
 >1, Proportional-With-Set-Coin 1
 >0, PPLNS N = 1000

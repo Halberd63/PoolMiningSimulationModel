@@ -423,6 +423,7 @@ class TheSimulation(Model):
         self.pools = nPools + pPools
         self.numberOfMiners = minerCount
         self.numberOfPools = poolCount
+        self.minersTotalPower = minerCount
         self.totalPower = [0 for _ in range(coins)]
         for miner in miners:
             if miner.getBehaviour() == "HONEST" or len(self.pools) == 1:
@@ -454,6 +455,7 @@ class TheSimulation(Model):
         self.tickNumber += 1
         global blockAvailable, coins, currentCoin, blockFound
         hasStepped = False
+        # Calculate the power for each coin before new time unit starts
         for coin in range(coins):
             self.simulationTime[coin] += 1
             blockAvailable = False
@@ -464,29 +466,28 @@ class TheSimulation(Model):
                 if pool.coin == coin: totalCoinPower += pool.recalcPoolPower()
             self.totalPower[coin] = totalCoinPower
         
-        
-        #Run below code if somebody has found a block
-        if random.randint(1,self.puzzleDifficulty) == 1:
-            coin = random.randint(0,coins - 1)
-            currentCoin = coin
-            #print(coin)
-            self.numberOfBlocksFound += 1
-            global passValue, currentValue
-            blockAvailable = True
-            passValue = random.uniform(0,1)*self.totalPower[coin]
-            self.blockFindingTimes.append(self.simulationTime[coin])
-            self.simulationTime[coin] = 0
-            blockFound = False
-            self.schedule.step()
-            hasStepped = True
-            currentValue = 0
-            for pool in self.pools:
-                pool.roundEnd()
-            for member in self.schedule.agents:
-                for membership in member.poolMemberships:
-                    membership.resetShareContribution()
+        # Run below code if somebody has found a block
+            if random.randint(1,int(self.puzzleDifficulty*self.totalPower[coin]/self.minersTotalPower)) == 1:
+                #coin = random.randint(0,coins - 1)
+                #currentCoin = coin
+                #print(coin)
+                self.numberOfBlocksFound += 1
+                global passValue, currentValue
+                blockAvailable = True
+                passValue = random.uniform(0,1)*self.totalPower[coin]
+                self.blockFindingTimes.append(self.simulationTime[coin])
+                self.simulationTime[coin] = 0
+                blockFound = False
+                self.schedule.step()
+                hasStepped = True
+                currentValue = 0
+                for pool in self.pools:
+                    pool.roundEnd()
+                for member in self.schedule.agents:
+                    for membership in member.poolMemberships:
+                        membership.resetShareContribution()
 
-        if not hasStepped: self.schedule.step()
+            if not hasStepped: self.schedule.step()
 
 
 
@@ -518,7 +519,7 @@ class TheSimulation(Model):
         for miner in self.schedule.agents:
             if miner != self.focussedMiner:
                 averageWealth += miner.wealth
-        averageWealth /= len(self.schedule.agents)
+        averageWealth /= (len(self.schedule.agents)-1)
         f = self.focussedMiner
         print("The Yevhen-Coin-Hopper:\nWealth / AvePeerWealth = " + str(f.wealth / averageWealth) 
             + "\nC0 = " + str(self.tickNumber)

@@ -1,6 +1,7 @@
 from sys import argv
 from Simulation_Classes import *
 from Simulation_Graphing import *
+import time
 
 
 
@@ -25,7 +26,9 @@ def runSimulation():
 
     for i in range(cycles):
         model.step()
-        print(str(100 * i / cycles) + "%")
+        if i%100 == 0:
+            #Spends too much time on printing percentage
+            print(str(100 * i / cycles) + "%")
     #model.showAgentDeets()
     #model.showPoolDeets()
     model.showFocussedMinerDeets()
