@@ -23,10 +23,12 @@ def runSimulation():
         break
     inFile.close()
 
-    for _ in range(cycles):
+    for i in range(cycles):
         model.step()
+        #print(str(100 * i / cycles) + "%")
     #model.showAgentDeets()
-    model.showPoolDeets()
+    #model.showPoolDeets()
+    model.showFocussedMinerDeets()
     return model
 
 if __name__ == "__main__":
