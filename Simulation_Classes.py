@@ -128,9 +128,9 @@ class Miner(Agent):
                 self.C2 += 1
             self.C4 += 1
 
+            if hop != 0: self.C4 = 0
             if hop == 2 and minedCoin == self.coin:
                 print("Is hopping to new pool")
-                self.C4 = 0
                 SecondaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin != self.coin:
@@ -140,9 +140,9 @@ class Miner(Agent):
                     self.currentPool = SecondaryCoins[
                         random.randint(0, len(SecondaryCoins) - 1)]
                     self.poolMemberships[self.currentPool].currentContribution = self.power
+                    
             if hop == 1 and minedCoin != self.coin:
                 print("Is hopping back to old pool")
-                self.C4 = 0
                 PrimaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin == self.coin:
@@ -469,7 +469,7 @@ class TheSimulation(Model):
         if random.randint(1,self.puzzleDifficulty) == 1:
             coin = random.randint(0,coins - 1)
             currentCoin = coin
-            print(coin)
+            #print(coin)
             self.numberOfBlocksFound += 1
             global passValue, currentValue
             blockAvailable = True

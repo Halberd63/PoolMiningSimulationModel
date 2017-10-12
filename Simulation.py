@@ -25,7 +25,7 @@ def runSimulation():
 
     for i in range(cycles):
         model.step()
-        #print(str(100 * i / cycles) + "%")
+        print(str(100 * i / cycles) + "%")
     #model.showAgentDeets()
     #model.showPoolDeets()
     model.showFocussedMinerDeets()
