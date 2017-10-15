@@ -136,11 +136,6 @@ class Miner(Agent):
 
             if hop != 0: self.C4 = 0
             if hop == 2 and minedCoin == self.coin:
-<<<<<<< HEAD
-                # print("Is hopping to new pool")
-=======
-                #print("Is hopping to new pool")
->>>>>>> 979d568112668d430b8eaa6af675e61831bc93a0
                 SecondaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin != self.coin:
@@ -152,11 +147,6 @@ class Miner(Agent):
                     self.poolMemberships[self.currentPool].currentContribution = self.power
                     
             if hop == 1 and minedCoin != self.coin:
-<<<<<<< HEAD
-                # print("Is hopping back to old pool")
-=======
-                #print("Is hopping back to old pool")
->>>>>>> 979d568112668d430b8eaa6af675e61831bc93a0
                 PrimaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin == self.coin:
@@ -485,11 +475,8 @@ class TheSimulation(Model):
                 hopperPower = 1
         
         # Run below code if somebody has found a block
-<<<<<<< HEAD
             if random.randint(1,int(self.puzzleDifficulty*(self.totalPower[coin]-hopperPower)/self.totalPower[coin])) == 1:
-=======
-            if random.randint(1,1 + round(int(self.puzzleDifficulty*self.totalPower[coin]/self.minersTotalPower))) == 1:
->>>>>>> 979d568112668d430b8eaa6af675e61831bc93a0
+
                 #coin = random.randint(0,coins - 1)
                 #currentCoin = coin
                 #print(coin)
