@@ -1,4 +1,4 @@
->100000, Cycles
+>1000000, Cycles
 >2, Coins
 #
 No. of Miners:
@@ -6,7 +6,7 @@ No. of Miners:
 >50, Honest
 >0, Lone-Wolf
 >0, Coin-Hoppers
->1, Yev-Coin-Hoppers params = 0.5 100 1
+>1, Yev-Coin-Hoppers params = 0.6 100 1
 #
 
 No. of Pools:
