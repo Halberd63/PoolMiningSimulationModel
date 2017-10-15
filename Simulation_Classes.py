@@ -17,6 +17,12 @@ coins = 0
 currentCoin = 0
 
 
+#C0 - Number of cycles
+#C1 – number of full solutions found when the miner is with coin_1;
+#C2 – total number of full solutions found in coin_1; 
+#C3 – number of iterations when the miner is with coin_1; 
+#C4 – number of iterations since the beginning of the current hopping period
+
 
 #An agent that represents a cryptocurrency miner
 class Miner(Agent):
@@ -130,7 +136,7 @@ class Miner(Agent):
 
             if hop != 0: self.C4 = 0
             if hop == 2 and minedCoin == self.coin:
-                print("Is hopping to new pool")
+                #print("Is hopping to new pool")
                 SecondaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin != self.coin:
@@ -142,7 +148,7 @@ class Miner(Agent):
                     self.poolMemberships[self.currentPool].currentContribution = self.power
                     
             if hop == 1 and minedCoin != self.coin:
-                print("Is hopping back to old pool")
+                #print("Is hopping back to old pool")
                 PrimaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin == self.coin:
@@ -467,7 +473,7 @@ class TheSimulation(Model):
             self.totalPower[coin] = totalCoinPower
         
         # Run below code if somebody has found a block
-            if random.randint(1,int(self.puzzleDifficulty*self.totalPower[coin]/self.minersTotalPower)) == 1:
+            if random.randint(1,1 + round(int(self.puzzleDifficulty*self.totalPower[coin]/self.minersTotalPower))) == 1:
                 #coin = random.randint(0,coins - 1)
                 #currentCoin = coin
                 #print(coin)
@@ -487,7 +493,7 @@ class TheSimulation(Model):
                     for membership in member.poolMemberships:
                         membership.resetShareContribution()
 
-            if not hasStepped: self.schedule.step()
+        if not hasStepped: self.schedule.step()
 
 
 

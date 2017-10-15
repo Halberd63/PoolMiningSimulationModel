@@ -1,4 +1,4 @@
->1000000, Cycles
+>10000000, Cycles
 >2, Coins
 #
 No. of Miners:
