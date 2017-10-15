@@ -26,7 +26,7 @@ def runSimulation():
 
     for i in range(cycles):
         model.step()
-        if i%100 == 0:
+        if i%1000 == 0:
             #Spends too much time on printing percentage
             print(str(100 * i / cycles) + "%")
     #model.showAgentDeets()

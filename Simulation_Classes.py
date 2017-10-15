@@ -130,7 +130,7 @@ class Miner(Agent):
 
             if hop != 0: self.C4 = 0
             if hop == 2 and minedCoin == self.coin:
-                print("Is hopping to new pool")
+                # print("Is hopping to new pool")
                 SecondaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin != self.coin:
@@ -142,7 +142,7 @@ class Miner(Agent):
                     self.poolMemberships[self.currentPool].currentContribution = self.power
                     
             if hop == 1 and minedCoin != self.coin:
-                print("Is hopping back to old pool")
+                # print("Is hopping back to old pool")
                 PrimaryCoins = []
                 for membership in range(len(self.poolMemberships)):
                     if self.poolMemberships[membership].pool.coin == self.coin:
@@ -382,7 +382,7 @@ class TheSimulation(Model):
                         if pType[:16] == "Yev-Coin-Hoppers":
                             params = pType[26:].split()
                             minerCount += 1
-                            phMiners.append(Miner(minerCount,self,"YEVCOINHOP",random.randint(0,coins-1)
+                            phMiners.append(Miner(minerCount,self,"YEVCOINHOP",0
                                 ,float(params[0]),int(params[1]),int(params[2])))
                             self.focussedMiner = phMiners[-1]
                             print("Made yevcoinhopper")
@@ -454,9 +454,10 @@ class TheSimulation(Model):
 
         self.tickNumber += 1
         global blockAvailable, coins, currentCoin, blockFound
-        hasStepped = False
+        # hasStepped = False
         # Calculate the power for each coin before new time unit starts
         for coin in range(coins):
+            hasStepped = False
             self.simulationTime[coin] += 1
             blockAvailable = False
             blockFound = False
@@ -465,9 +466,12 @@ class TheSimulation(Model):
             for pool in self.pools:
                 if pool.coin == coin: totalCoinPower += pool.recalcPoolPower()
             self.totalPower[coin] = totalCoinPower
+            hopperPower = 0
+            if self.pools[self.focussedMiner.currentPool].coin == coin:
+                hopperPower = 1
         
         # Run below code if somebody has found a block
-            if random.randint(1,int(self.puzzleDifficulty*self.totalPower[coin]/self.minersTotalPower)) == 1:
+            if random.randint(1,int(self.puzzleDifficulty*(self.totalPower[coin]-hopperPower)/self.totalPower[coin])) == 1:
                 #coin = random.randint(0,coins - 1)
                 #currentCoin = coin
                 #print(coin)
@@ -487,7 +491,7 @@ class TheSimulation(Model):
                     for membership in member.poolMemberships:
                         membership.resetShareContribution()
 
-            if not hasStepped: self.schedule.step()
+        if not hasStepped: self.schedule.step()
 
 
 
