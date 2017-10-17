@@ -235,7 +235,7 @@ class Pool:
     def __init__(self, uniqueID, scheme, coin,N = 0):
         self.poolPower = 0
         #% of a block that the pool admin takes for themself
-        self.fees = 0.02
+        self.fees = 0#0.02
         #list of members in the pool (poolmembership instances)
         self.members = []
         self.coin = coin
@@ -351,6 +351,7 @@ class TheSimulation(Model):
         lwMiners = []
         pPools = []
         nPools = []
+        self.focussedMiner = None
         for line in inFile:
             if line[0] == "#":
                 section += 1
@@ -432,7 +433,8 @@ class TheSimulation(Model):
         for miner in miners:
             if miner.getBehaviour() == "HONEST" or len(self.pools) == 1:
                 assert len(self.pools) >= 1, "Too few pools for non-lonewolves"
-                miner.setPoolMemberships(self.pools)
+                #miner.setPoolMemberships(self.pools)
+                miner.setPoolMemberships([self.pools[random.randint(0,len(self.pools)-1)]])
                 for membership in miner.poolMemberships:
                     membership.currentContribution = miner.power / len(miner.poolMemberships)
 
@@ -471,10 +473,13 @@ class TheSimulation(Model):
                 if pool.coin == coin: totalCoinPower += pool.recalcPoolPower()
             self.totalPower[coin] = totalCoinPower
             hopperPower = 0
-            if self.pools[self.focussedMiner.currentPool].coin == coin:
+            if self.focussedMiner and self.pools[self.focussedMiner.currentPool].coin == coin:
                 hopperPower = 1
         
         # Run below code if somebody has found a block
+            #print(self.puzzleDifficulty)
+            #print(self.totalPower[coin])
+            #print(hopperPower)
             if random.randint(1,int(self.puzzleDifficulty*(self.totalPower[coin]-hopperPower)/self.totalPower[coin])) == 1:
 
                 #coin = random.randint(0,coins - 1)
@@ -524,18 +529,19 @@ class TheSimulation(Model):
     #Specialised output for yevhens coinhopping miner to print their counters
     def showFocussedMinerDeets(self):
         print("\n\n\n")
-        averageWealth = 0
-        for miner in self.schedule.agents:
-            if miner != self.focussedMiner:
-                averageWealth += miner.wealth
-        averageWealth /= (len(self.schedule.agents)-1)
-        f = self.focussedMiner
-        print("The Yevhen-Coin-Hopper:\nWealth / AvePeerWealth = " + str(f.wealth / averageWealth) 
-            + "\nC0 = " + str(self.tickNumber)
-            + "\nC1 = " + str(f.C1)
-            + "\nC2 = " + str(f.C2)
-            + "\nC3 = " + str(f.C3))
-        print("C1/C2 - C3/C0 = " + str(f.C1/f.C2 - f.C3/self.tickNumber))
+        if self.focussedMiner:
+            averageWealth = 0
+            for miner in self.schedule.agents:
+                if miner != self.focussedMiner:
+                    averageWealth += miner.wealth
+            averageWealth /= (len(self.schedule.agents)-1)
+            f = self.focussedMiner
+            print("The Yevhen-Coin-Hopper:\nWealth / AvePeerWealth = " + str(f.wealth / averageWealth) 
+                + "\nC0 = " + str(self.tickNumber)
+                + "\nC1 = " + str(f.C1)
+                + "\nC2 = " + str(f.C2)
+                + "\nC3 = " + str(f.C3))
+            print("C1/C2 - C3/C0 = " + str(f.C1/f.C2 - f.C3/self.tickNumber))
 
 
     def showPoolDeets(self):

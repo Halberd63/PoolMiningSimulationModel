@@ -38,4 +38,5 @@ if __name__ == "__main__":
     theModel = runSimulation()
     #graphBlocksFoundOverTime(theModel)
     graphWealthoverID(theModel)
+    getCSVOutput(theModel)
     #graphPoweroverID(theModel)

@@ -159,3 +159,31 @@ def graphWealthoverID(model):
     plt.title('Miner Wealth vs ID')
     plt.show()
         
+def getCSVOutput(model):
+    outFile = open('CSVOutput.txt', 'w')
+    miners = model.schedule.agents
+    for miner in miners:
+        outFile.write(str(miner.id) + ",")
+        outFile.write(str(miner.behaviour) + ",")
+        outFile.write(str(miner.wealth) + ",")
+        outFile.write(str(miner.power) + ",")
+        outFile.write(str(miner.poolMemberships[0].pool) + "\n")
+    outFile.close()
+
+    outFile = open('CSVBlocksFound.txt', 'w')
+    miningTimes = model.getMiningTimes()
+    miningTimes.sort()
+    print(miningTimes)
+    numberOfBlocksOverTime = []
+    for i in range(1,miningTimes[-1]+1):
+        for j in range(len(miningTimes)):
+            if i < miningTimes[j]:
+                numberOfBlocksOverTime.append(j)
+                break
+    print(numberOfBlocksOverTime)
+    
+    for i in range(miningTimes[-1]+1):
+        outFile.write(str(miningTimes[i]) + ",")
+        outFile.write(str(numberOfBlocksOverTime[i]) + "\n")
+
+    outFile.close()

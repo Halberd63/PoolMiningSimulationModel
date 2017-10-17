@@ -1,25 +1,25 @@
->10000000, Cycles
->2, Coins
+>1000000, Cycles
+>1, Coins
 #
 No. of Miners:
->0, 2-Pool-Hoppers
+>50, 2-Pool-Hoppers
 >50, Honest
 >0, Lone-Wolf
 >0, Coin-Hoppers
->1, Yev-Coin-Hoppers params = 0.2 100 1
+>0, Yev-Coin-Hoppers params = 0.2 200 1
 #
 
 No. of Pools:
->1, Proportional-With-Set-Coin 0
->1, Proportional-With-Set-Coin 1
->5, Proportional
+>0, Proportional-With-Set-Coin 0
+>0, Proportional-With-Set-Coin 1
+>10, Proportional
 >0, PPLNS N = 1000
 #
 
 Special Rules #Todo- make these inputs actually do something:
 
 #
->50, Difficulty
+>100, Difficulty
 
 #
 
