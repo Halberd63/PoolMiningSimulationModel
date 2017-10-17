@@ -52,7 +52,7 @@ class Miner(Agent):
         self.soloDedicatedPower = 0
         if behaviour == "LONEWOLF":
             self.soloDedicatedPower = self.power
-        if behaviour == "2POOLHOPPER" or behaviour == "COINHOPPER" or behaviour == "YEVCOINHOP": self.currentPool = 0
+        if behaviour == "2POOLHOPPER" or behaviour == "COINHOPPER" or behaviour == "YEVCOINHOP": self.currentPool = coin
 
 
         #percentage of time the miner will stay with pool 1 if they are a hopper
@@ -351,7 +351,7 @@ class TheSimulation(Model):
         lwMiners = []
         pPools = []
         nPools = []
-        self.focussedMiner = None
+        self.focussedMiners = []
         for line in inFile:
             if line[0] == "#":
                 section += 1
@@ -387,9 +387,10 @@ class TheSimulation(Model):
                         if pType[:16] == "Yev-Coin-Hoppers":
                             params = pType[26:].split()
                             minerCount += 1
-                            phMiners.append(Miner(minerCount,self,"YEVCOINHOP",0
-                                ,float(params[0]),int(params[1]),int(params[2])))
-                            self.focussedMiner = phMiners[-1]
+                            yevCoinHopper = Miner(minerCount,self,"YEVCOINHOP",random.randint(0,coins-1)
+                                ,float(params[0]),int(params[1]),int(params[2]))
+                            phMiners.append(yevCoinHopper)
+                            self.focussedMiners.append(yevCoinHopper)
                             print("Made yevcoinhopper")
 
                         if pType == "Honest":
@@ -441,7 +442,7 @@ class TheSimulation(Model):
             elif miner.getBehaviour() == "2POOLHOPPER" or miner.getBehaviour() == "COINHOPPER"or miner.getBehaviour() == "YEVCOINHOP":
                 assert len(self.pools) >= 2, "Too few pools for pool hoppers"
                 miner.setPoolMemberships(self.pools)
-                miner.poolMemberships[0].currentContribution = miner.power
+                miner.poolMemberships[miner.coin].currentContribution = miner.power
             self.schedule.add(miner)
 
 
@@ -473,18 +474,19 @@ class TheSimulation(Model):
                 if pool.coin == coin: totalCoinPower += pool.recalcPoolPower()
             self.totalPower[coin] = totalCoinPower
             hopperPower = 0
-            if self.focussedMiner and self.pools[self.focussedMiner.currentPool].coin == coin:
-                hopperPower = 1
+            for focussedMiner in self.focussedMiners:
+                if focussedMiner and self.pools[focussedMiner.currentPool].coin == coin:
+                    hopperPower += 1
         
         # Run below code if somebody has found a block
             #print(self.puzzleDifficulty)
-            #print(self.totalPower[coin])
-            #print(hopperPower)
+            # print(self.totalPower[coin])
+            # print(hopperPower)
             if random.randint(1,int(self.puzzleDifficulty*(self.totalPower[coin]-hopperPower)/self.totalPower[coin])) == 1:
 
                 #coin = random.randint(0,coins - 1)
-                #currentCoin = coin
-                #print(coin)
+                # currentCoin = coin
+                # print(coin)
                 self.numberOfBlocksFound += 1
                 global passValue, currentValue
                 blockAvailable = True
@@ -529,19 +531,32 @@ class TheSimulation(Model):
     #Specialised output for yevhens coinhopping miner to print their counters
     def showFocussedMinerDeets(self):
         print("\n\n\n")
-        if self.focussedMiner:
+        if len(self.focussedMiners) != 0:
             averageWealth = 0
             for miner in self.schedule.agents:
-                if miner != self.focussedMiner:
+                if miner not in self.focussedMiners:
                     averageWealth += miner.wealth
-            averageWealth /= (len(self.schedule.agents)-1)
-            f = self.focussedMiner
-            print("The Yevhen-Coin-Hopper:\nWealth / AvePeerWealth = " + str(f.wealth / averageWealth) 
+            averageWealth /= (len(self.schedule.agents)-len(self.focussedMiners))
+            averageWealthCoinHop = 0
+            averageC1 = 0
+            averageC2 = 0
+            averageC3 = 0
+            for miner in self.schedule.agents:
+                if miner in self.focussedMiners:
+                    averageWealthCoinHop += miner.wealth
+                    averageC1 += miner.C1
+                    averageC2 += miner.C2
+                    averageC3 += miner.C3
+            averageWealthCoinHop /= len(self.focussedMiners)
+            averageC1 /= len(self.focussedMiners)
+            averageC2 /= len(self.focussedMiners)
+            averageC3 /= len(self.focussedMiners)
+            print("The Yevhen-Coin-Hopper:\nWealth / AvePeerWealth = " + str(averageWealthCoinHop / averageWealth)
                 + "\nC0 = " + str(self.tickNumber)
-                + "\nC1 = " + str(f.C1)
-                + "\nC2 = " + str(f.C2)
-                + "\nC3 = " + str(f.C3))
-            print("C1/C2 - C3/C0 = " + str(f.C1/f.C2 - f.C3/self.tickNumber))
+                + "\nC1 = " + str(averageC1)
+                + "\nC2 = " + str(averageC2)
+                + "\nC3 = " + str(averageC3))
+            print("C1/C2 - C3/C0 = " + str(averageC1/averageC2 - averageC3/self.tickNumber))
 
 
     def showPoolDeets(self):
