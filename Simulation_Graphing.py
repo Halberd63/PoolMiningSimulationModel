@@ -170,20 +170,20 @@ def getCSVOutput(model):
         outFile.write(str(miner.poolMemberships[0].pool) + "\n")
     outFile.close()
 
-    outFile = open('CSVBlocksFound.txt', 'w')
-    miningTimes = model.getMiningTimes()
-    miningTimes.sort()
-    print(miningTimes)
-    numberOfBlocksOverTime = []
-    for i in range(1,miningTimes[-1]+1):
-        for j in range(len(miningTimes)):
-            if i < miningTimes[j]:
-                numberOfBlocksOverTime.append(j)
-                break
-    print(numberOfBlocksOverTime)
-    
-    for i in range(miningTimes[-1]+1):
-        outFile.write(str(miningTimes[i]) + ",")
-        outFile.write(str(numberOfBlocksOverTime[i]) + "\n")
-
-    outFile.close()
+    # outFile = open('CSVBlocksFound.txt', 'w')
+    # miningTimes = model.getMiningTimes()
+    # miningTimes.sort()
+    # print(miningTimes)
+    # numberOfBlocksOverTime = []
+    # for i in range(1,miningTimes[-1]+1):
+    #     for j in range(len(miningTimes)):
+    #         if i < miningTimes[j]:
+    #             numberOfBlocksOverTime.append(j)
+    #             break
+    # print(numberOfBlocksOverTime)
+    #
+    # for i in range(miningTimes[-1]+1):
+    #     outFile.write(str(miningTimes[i]) + ",")
+    #     outFile.write(str(numberOfBlocksOverTime[i]) + "\n")
+    #
+    # outFile.close()

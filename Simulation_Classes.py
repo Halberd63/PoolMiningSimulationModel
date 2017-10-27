@@ -336,7 +336,12 @@ class TheSimulation(Model):
         self.numberOfBlocksFound = 0
         self.blockFindingTimes = []
 
-
+        # calculate initial power of coin
+        for coin in range(coins):
+            totalCoinPower = 0
+            for pool in self.pools:
+                if pool.coin == coin: totalCoinPower += pool.recalcPoolPower()
+            self.totalPower[coin] = totalCoinPower
 
 
 
@@ -469,20 +474,15 @@ class TheSimulation(Model):
             blockAvailable = False
             blockFound = False
             currentCoin = coin
-            totalCoinPower = 0
+            currentTotalCoinPower = 0
             for pool in self.pools:
-                if pool.coin == coin: totalCoinPower += pool.recalcPoolPower()
-            self.totalPower[coin] = totalCoinPower
-            hopperPower = 0
-            for focussedMiner in self.focussedMiners:
-                if focussedMiner and self.pools[focussedMiner.currentPool].coin == coin:
-                    hopperPower += 1
+                if pool.coin == coin: currentTotalCoinPower += pool.recalcPoolPower()
         
         # Run below code if somebody has found a block
             #print(self.puzzleDifficulty)
             # print(self.totalPower[coin])
             # print(hopperPower)
-            if random.randint(1,int(self.puzzleDifficulty*(self.totalPower[coin]-hopperPower)/self.totalPower[coin])) == 1:
+            if random.randint(1,int(self.puzzleDifficulty*(self.totalPower[coin])/currentTotalCoinPower)) == 1:
 
                 #coin = random.randint(0,coins - 1)
                 # currentCoin = coin
