@@ -126,7 +126,8 @@ class Miner(Agent):
             #print(str(minedCoin) + " " + str(self.coin) + " ----- " + str(self.C3))
             
             hop = 0
-            if self.C4 == round(self.beta*self.delta): hop = 2
+            if self.C4 == round(self.beta*self.delta):
+                hop = 2
             if self.C4 == round(self.delta): hop = 1
             if blockFound and currentCoin == self.coin: 
                 hop = 1
@@ -134,7 +135,7 @@ class Miner(Agent):
                 self.C2 += 1
             self.C4 += 1
 
-            if hop != 0: self.C4 = 0
+            if hop == 1: self.C4 = 0
             if hop == 2 and minedCoin == self.coin:
                 SecondaryCoins = []
                 for membership in range(len(self.poolMemberships)):
@@ -392,6 +393,8 @@ class TheSimulation(Model):
                         if pType[:16] == "Yev-Coin-Hoppers":
                             params = pType[26:].split()
                             minerCount += 1
+                            # yevCoinHopper = Miner(minerCount,self,"YEVCOINHOP",0
+                            #     ,float(params[0]),int(params[1]),int(params[2]))
                             yevCoinHopper = Miner(minerCount,self,"YEVCOINHOP",random.randint(0,coins-1)
                                 ,float(params[0]),int(params[1]),int(params[2]))
                             phMiners.append(yevCoinHopper)
@@ -439,7 +442,7 @@ class TheSimulation(Model):
         for miner in miners:
             if miner.getBehaviour() == "HONEST" or len(self.pools) == 1:
                 assert len(self.pools) >= 1, "Too few pools for non-lonewolves"
-                #miner.setPoolMemberships(self.pools)
+                miner.setPoolMemberships(self.pools)
                 miner.setPoolMemberships([self.pools[random.randint(0,len(self.pools)-1)]])
                 for membership in miner.poolMemberships:
                     membership.currentContribution = miner.power / len(miner.poolMemberships)
@@ -482,6 +485,9 @@ class TheSimulation(Model):
             #print(self.puzzleDifficulty)
             # print(self.totalPower[coin])
             # print(hopperPower)
+            if currentTotalCoinPower == 0:
+                # If current power in coin is 0 make it almost impossible to find a block.
+                currentTotalCoinPower = 0.000000001
             if random.randint(1,int(self.puzzleDifficulty*(self.totalPower[coin])/currentTotalCoinPower)) == 1:
 
                 #coin = random.randint(0,coins - 1)

@@ -1,18 +1,18 @@
->1000000, Cycles
+>200000, Cycles
 >2, Coins
 #
 No. of Miners:
 >0, 2-Pool-Hoppers
->50, Honest
+>25, Honest
 >0, Lone-Wolf
->0, Coin-Hoppers
->50, Yev-Coin-Hoppers params = 0.6 100 1
+>25, Coin-Hoppers
+>0, Yev-Coin-Hoppers params = 0.6 100 1
 #
 
 No. of Pools:
 >1, Proportional-With-Set-Coin 0
 >1, Proportional-With-Set-Coin 1
->10, Proportional
+>5, Proportional
 >0, PPLNS N = 1000
 #
 
