@@ -442,7 +442,7 @@ class TheSimulation(Model):
         for miner in miners:
             if miner.getBehaviour() == "HONEST" or len(self.pools) == 1:
                 assert len(self.pools) >= 1, "Too few pools for non-lonewolves"
-                miner.setPoolMemberships(self.pools)
+                # miner.setPoolMemberships(self.pools)
                 miner.setPoolMemberships([self.pools[random.randint(0,len(self.pools)-1)]])
                 for membership in miner.poolMemberships:
                     membership.currentContribution = miner.power / len(miner.poolMemberships)
@@ -496,7 +496,7 @@ class TheSimulation(Model):
                 self.numberOfBlocksFound += 1
                 global passValue, currentValue
                 blockAvailable = True
-                passValue = random.uniform(0,1)*self.totalPower[coin]
+                passValue = random.uniform(0,1)*currentTotalCoinPower
                 self.blockFindingTimes.append(self.simulationTime[coin])
                 self.simulationTime[coin] = 0
                 blockFound = False
