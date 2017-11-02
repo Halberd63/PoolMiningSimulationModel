@@ -5,7 +5,7 @@ from mesa.time import RandomActivation
 
 #an arbitrary value used to denote wealth amongst miners
 global BTCVALUE
-BTCVALUE = 1000
+BTCVALUE = []
 
 #Variables that decide who actually found a block when one is found to be found
 global passValue, currentValue, blockFound, blockAvailable, coins, currentCoin # We need a better names
@@ -276,7 +276,7 @@ class Pool:
         #print("Block was found!")
         for member in self.members:
             effort = member.getCurrentContribution() / (self.recalcPoolPower())
-            reward = BTCVALUE*effort
+            reward = BTCVALUE[currentCoin]*effort
             reward *= 1-self.fees
             member.getMiner().giveWealth(reward)
 
@@ -332,17 +332,21 @@ class TheSimulation(Model):
 
 
         #Handle the input arguments
-        global coins
+        global coins, BTCVALUE
         self.simulationTime = [0 for _ in range(coins)]
         self.numberOfBlocksFound = 0
         self.blockFindingTimes = []
 
+
         # calculate initial power of coin
+        allCoinsCombinedPower = 0
         for coin in range(coins):
             totalCoinPower = 0
             for pool in self.pools:
                 if pool.coin == coin: totalCoinPower += pool.recalcPoolPower()
             self.totalPower[coin] = totalCoinPower
+            BTCVALUE.append(10*totalCoinPower)
+
 
 
 
